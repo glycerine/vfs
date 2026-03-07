@@ -989,7 +989,9 @@ func (f *memFile) WriteAt(p []byte, ofs int64) (int, error) {
 }
 
 func (f *memFile) Prefetch(offset int64, length int64) error { return nil }
-func (f *memFile) Preallocate(offset, length int64) error    { return nil }
+func (f *memFile) Preallocate(offset, length int64) error {
+	return f.Truncate(offset + length)
+}
 
 func (f *memFile) Stat() (FileInfo, error) {
 	f.n.mu.Lock()
