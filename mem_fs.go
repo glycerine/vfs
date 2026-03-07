@@ -892,6 +892,7 @@ func (f *memFile) Write(p []byte) (int, error) {
 	f.n.mu.Lock()
 	defer f.n.mu.Unlock()
 	f.n.mu.modTime = time.Now()
+
 	if f.pos+len(p) <= len(f.n.mu.data) {
 		n := copy(f.n.mu.data[f.pos:f.pos+len(p)], p)
 		if n != len(p) {
@@ -932,11 +933,13 @@ func (f *memFile) WriteAt(p []byte, ofs int64) (int, error) {
 	defer f.n.mu.Unlock()
 	f.n.mu.modTime = time.Now()
 
-	for len(f.n.mu.data) < int(ofs)+len(p) {
-		f.n.mu.data = append(f.n.mu.data, 0)
+	targetLen := int(ofs) + len(p)
+	if targetLen > len(f.n.mu.data) {
+		gap := targetLen - len(f.n.mu.data)
+		f.n.mu.data = append(f.n.mu.data, make([]byte, gap)...)
 	}
 
-	n := copy(f.n.mu.data[int(ofs):int(ofs)+len(p)], p)
+	n := copy(f.n.mu.data[int(ofs):targetLen], p)
 	if n != len(p) {
 		panic("stuff")
 	}
