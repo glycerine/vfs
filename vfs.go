@@ -196,6 +196,13 @@ type FS interface {
 	IsReal() bool
 
 	WalkDir(path string, f iofs.WalkDirFunc) error
+
+	// MountReadOnlyReadDir mounts fromRealDir inside the MemFS at mountPointInsideDir.
+	// This is useful to avoid copying large test assets. Real directories can be
+	// read-only mounted inside MemFS with this call. Attempts to write to
+	// the read-only mount will return erros. The mount point cannot already
+	// exist inside the target MemFS.
+	MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error
 }
 
 // A DeviceID uniquely identifies a block device on which filesystem data is

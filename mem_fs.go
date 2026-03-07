@@ -104,16 +104,18 @@ type MemFS struct {
 	underlay FS
 }
 
-// NewMemWithUnderlay returns a MemFS with a read-only underlay filesystem.
-// The underlay is visible through the MemFS for read operations (Open, Stat,
+// MountReadOnlyRealDir returns a MemFS with a directory
+// from the real (non-memory; vfs.Default) file system mounted
+// read-only at the given mountPath.
+//
+// The read-only mounted directory is visible through
+// the MemFS for read operations (Open, Stat,
 // List, ReadDir, WalkDir). Write operations (Create, MkdirAll, etc.) that
 // would conflict with underlay paths return an error. The overlay (MemFS)
-// and underlay directory trees must be completely disjoint.
-func NewMemWithUnderlay(underlay FS) *MemFS {
-	return &MemFS{
-		root:     newRootMemNode(),
-		underlay: &readOnlyFS{inner: underlay},
-	}
+// and read-only mount directory trees must be completely disjoint.
+func (m *MemFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	// TODO: implement this please, Claude, and delete this TODO comment.
+	return nil
 }
 
 // readOnlyFS wraps an FS and rejects all mutation methods.
@@ -152,15 +154,15 @@ func (r *readOnlyFS) MkdirAll(dir string, perm os.FileMode) error {
 func (r *readOnlyFS) Lock(name string) (io.Closer, error) {
 	return nil, fmt.Errorf("readOnlyFS: Lock(%q): read-only filesystem", name)
 }
-func (r *readOnlyFS) List(dir string) ([]string, error)          { return r.inner.List(dir) }
-func (r *readOnlyFS) Stat(name string) (FileInfo, error)         { return r.inner.Stat(name) }
-func (r *readOnlyFS) PathBase(p string) string                   { return r.inner.PathBase(p) }
-func (r *readOnlyFS) PathJoin(elem ...string) string             { return r.inner.PathJoin(elem...) }
-func (r *readOnlyFS) PathDir(p string) string                    { return r.inner.PathDir(p) }
-func (r *readOnlyFS) GetDiskUsage(p string) (DiskUsage, error)   { return r.inner.GetDiskUsage(p) }
-func (r *readOnlyFS) Unwrap() FS                                 { return r.inner }
+func (r *readOnlyFS) List(dir string) ([]string, error)             { return r.inner.List(dir) }
+func (r *readOnlyFS) Stat(name string) (FileInfo, error)            { return r.inner.Stat(name) }
+func (r *readOnlyFS) PathBase(p string) string                      { return r.inner.PathBase(p) }
+func (r *readOnlyFS) PathJoin(elem ...string) string                { return r.inner.PathJoin(elem...) }
+func (r *readOnlyFS) PathDir(p string) string                       { return r.inner.PathDir(p) }
+func (r *readOnlyFS) GetDiskUsage(p string) (DiskUsage, error)      { return r.inner.GetDiskUsage(p) }
+func (r *readOnlyFS) Unwrap() FS                                    { return r.inner }
 func (r *readOnlyFS) ReadDir(dirname string) ([]os.DirEntry, error) { return r.inner.ReadDir(dirname) }
-func (r *readOnlyFS) IsReal() bool                               { return r.inner.IsReal() }
+func (r *readOnlyFS) IsReal() bool                                  { return r.inner.IsReal() }
 func (r *readOnlyFS) WalkDir(path string, f iofs.WalkDirFunc) error { return r.inner.WalkDir(path, f) }
 
 var _ FS = (*readOnlyFS)(nil)
