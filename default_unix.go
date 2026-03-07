@@ -37,7 +37,11 @@ type unixFile struct {
 
 func (f *unixFile) Stat() (FileInfo, error)                 { return maybeWrapFileInfo(f.File.Stat()) }
 func (*unixFile) Prefetch(offset int64, length int64) error { return nil }
-func (*unixFile) Preallocate(offset, length int64) error    { return nil }
+func (f *unixFile) Preallocate(offset, length int64) (err error) {
+	_, err = fallocate(f.File, FALLOC_FL_KEEP_SIZE, offset, length)
+	//return unix.Fallocate(int(f.fd), unix.FALLOC_FL_KEEP_SIZE, offset, length)
+	return
+}
 
 func (f *unixFile) SyncData() error {
 	return f.Sync()
