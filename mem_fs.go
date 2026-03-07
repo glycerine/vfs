@@ -808,6 +808,9 @@ func (f *memFile) Truncate(size int64) error {
 	}
 	f.n.mu.Lock()
 	defer f.n.mu.Unlock()
+
+	f.n.mu.modTime = time.Now()
+
 	n := int64(len(f.n.mu.data))
 	switch {
 	case size <= n:
@@ -898,6 +901,8 @@ func (f *memFile) Write(p []byte) (int, error) {
 		if grow := f.pos - len(f.n.mu.data); grow > 0 {
 			f.n.mu.data = append(f.n.mu.data, make([]byte, grow)...)
 		}
+		// simultaneously overwrite any existing bytes starting at f.pos and extend
+		// the slice's total length to accommodate the rest of p
 		f.n.mu.data = append(f.n.mu.data[:f.pos], p...)
 	}
 	f.pos += len(p)
