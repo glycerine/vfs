@@ -294,6 +294,10 @@ func (d *diskHealthCheckingFile) ReadAt(p []byte, off int64) (int, error) {
 	return d.file.ReadAt(p, off)
 }
 
+func (d *diskHealthCheckingFile) Truncate(size int64) error {
+	return d.file.Truncate(size)
+}
+
 // Write implements the io.Writer interface.
 func (d *diskHealthCheckingFile) Write(p []byte) (n int, err error) {
 	d.timeDiskOp(OpTypeWrite, int64(len(p)), func() {

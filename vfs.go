@@ -71,6 +71,8 @@ type File interface {
 	// It can be used for specific functionality like Prefetch.
 	// Returns InvalidFd if not supported.
 	Fd() uintptr
+
+	Truncate(size int64) error
 }
 
 // InvalidFd is a special value returned by File.Fd() when the file is not

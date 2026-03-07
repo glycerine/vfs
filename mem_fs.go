@@ -741,6 +741,25 @@ type memFile struct {
 
 var _ File = (*memFile)(nil)
 
+// Truncate changes the size of the file. It does not change the
+// I/O offset. If there is an error, it will be of type *os.PathError.
+func (f *memFile) Truncate(size int64) error {
+	f.n.mu.Lock()
+	defer f.n.mu.Unlock()
+	n := int64(len(f.n.mu.data))
+	switch {
+	case size <= n:
+		// shrinking
+		f.n.mu.data = f.n.mu.data[:size]
+	default:
+		// growing. zero fill the extension. no sparse emulation atm.
+		newData := make([]byte, size)
+		copy(newData, f.n.mu.data)
+		f.n.mu.data = newData
+	}
+	return nil
+}
+
 func (f *memFile) Close() error {
 	if n := f.n.refs.Add(-1); n < 0 {
 		panic(fmt.Sprintf("pebble: close of unopened file: %d", n))

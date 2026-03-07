@@ -53,6 +53,10 @@ type linuxFile struct {
 	useSyncRange bool
 }
 
+func (d *linuxFile) Truncate(size int64) (err error) {
+	return d.Truncate(size)
+}
+
 func (f *linuxFile) Prefetch(offset int64, length int64) error {
 	_, _, err := unix.Syscall(unix.SYS_READAHEAD, uintptr(f.fd), uintptr(offset), uintptr(length))
 	return err
