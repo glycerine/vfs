@@ -194,6 +194,8 @@ type FS interface {
 	ReadDir(dirname string) ([]os.DirEntry, error)
 
 	IsReal() bool
+
+	WalkDir(path string, f iofs.WalkDirFunc) error
 }
 
 // A DeviceID uniquely identifies a block device on which filesystem data is

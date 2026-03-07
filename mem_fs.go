@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/fs"
+	iofs "io/fs"
 	"maps"
 	"math/rand/v2"
 	"os"
@@ -678,14 +678,13 @@ func (y *MemFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 		}
 
 		// 4. Wrap the FileInfo into a standard DirEntry (requires Go 1.16+)
-		entries = append(entries, fs.FileInfoToDirEntry(info))
+		entries = append(entries, iofs.FileInfoToDirEntry(info))
 	}
 
 	return entries, nil
 }
 
-// f is a io/fs.WalkDirFunc
-func (y *MemFS) WalkDir(path string, f func(filePath string, d fs.DirEntry, err error)) error {
+func (y *MemFS) WalkDir(path string, f iofs.WalkDirFunc) error {
 	// real/default does: return filepath.WalkDir(path, f)
 	innerF := func(dir *memNode, frag string, final bool) error {
 		vv("MemFS.WalkDir.innerF sees callback: dir='%#v'; frag='%v'; final='%v'", dir, frag, final)

@@ -6,6 +6,7 @@ package vfs
 
 import (
 	"io"
+	iofs "io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -107,6 +108,7 @@ type mockFS struct {
 	stat          func(string) (FileInfo, error)
 	getDiskUsage  func(string) (DiskUsage, error)
 	readDir       func(string) ([]os.DirEntry, error)
+	walkDir       func(path string, f iofs.WalkDirFunc) error
 }
 
 func (m mockFS) Create(name string, category DiskWriteCategory) (File, error) {
@@ -236,6 +238,13 @@ func (m mockFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 		panic("unimplemented")
 	}
 	return m.ReadDir(dirname)
+}
+
+func (m mockFS) WalkDir(path string, f iofs.WalkDirFunc) error {
+	if m.walkDir == nil {
+		panic("unimplemented")
+	}
+	return m.WalkDir(path, f)
 }
 
 var _ FS = &mockFS{}

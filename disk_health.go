@@ -8,6 +8,7 @@ import (
 	"cmp"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path/filepath"
 	"slices"
@@ -726,6 +727,10 @@ func (d *diskHealthCheckingFS) startTickerLocked() {
 
 func (d *diskHealthCheckingFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return d.fs.ReadDir(dirname)
+}
+
+func (d *diskHealthCheckingFS) WalkDir(path string, f iofs.WalkDirFunc) error {
+	return d.fs.WalkDir(path, f)
 }
 
 func (d *diskHealthCheckingFS) IsReal() bool { return false }

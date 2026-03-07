@@ -6,6 +6,7 @@ package vfs
 
 import (
 	"io"
+	iofs "io/fs"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -359,6 +360,10 @@ func (fs *enospcFS) GetDiskUsage(path string) (DiskUsage, error) {
 
 func (fs *enospcFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return fs.inner.ReadDir(dirname)
+}
+
+func (fs *enospcFS) WalkDir(path string, f iofs.WalkDirFunc) error {
+	return fs.inner.WalkDir(path, f)
 }
 
 func (fs *enospcFS) IsReal() bool {
