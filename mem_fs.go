@@ -684,15 +684,38 @@ func (y *MemFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return entries, nil
 }
 
-/*
-func (y *MemFS) ReadDir(dir string) ([]os.DirEntry, error) {
-	if y.crashable {
-		y.cloneMu.RLock()
-		defer y.cloneMu.RUnlock()
-	}
+// f is a io/fs.WalkDirFunc
+func (y *MemFS) WalkDir(path string, f func(filePath string, d fs.DirEntry, err error)) error {
+	// real/default does: return filepath.WalkDir(path, f)
+	innerF := func(dir *memNode, frag string, final bool) error {
+		vv("MemFS.WalkDir.innerF sees callback: dir='%#v'; frag='%v'; final='%v'", dir, frag, final)
 
+		//if dir.isDir{}
+		/*
+			         dirname := ?  // how to get?
+					// Build the exact path as MemFS expects it
+					fullPath := y.PathJoin(dirname, name)
+
+					// 3. Stat the file to get its os.FileInfo
+					info, err := y.Stat(fullPath)
+					if err != nil {
+						if os.IsNotExist(err) {
+							// The file was deleted in another
+							// goroutine between List and Stat.
+							// Standard POSIX behavior is to just skip it.
+							continue
+						}
+						return nil, err
+					}
+
+					// 4. Wrap the FileInfo into a standard DirEntry (requires Go 1.16+)
+					dirEntry := fs.FileInfoToDirEntry(info)
+			        f(fullpath, dirEntry, nil)
+		*/
+		return nil
+	}
+	return y.walk(path, innerF)
 }
-*/
 
 // memNode holds a file's data or a directory's children.
 type memNode struct {

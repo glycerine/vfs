@@ -7,6 +7,7 @@ package vfs
 import (
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -335,6 +336,11 @@ func (defaultFS) IsReal() bool { return true }
 
 func (defaultFS) ReadDir(dir string) ([]os.DirEntry, error) {
 	return os.ReadDir(dir)
+}
+
+// f is a io/fs.WalkDirFunc; func(filePath string, d iofs.DirEntry, err error)
+func (defaultFS) WalkDir(path string, f iofs.WalkDirFunc) error {
+	return filepath.WalkDir(path, f)
 }
 
 func (defaultFS) List(dir string) ([]string, error) {
