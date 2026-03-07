@@ -27,9 +27,3 @@ var ErrShortAlloc = fmt.Errorf("smaller extent than requested was allocated.")
 // allocated probably zero in this case, especially since
 // we asked for "all-or-nothing"
 var ErrFileTooLarge = fmt.Errorf("extent requested was too large.")
-
-func panicOn(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
