@@ -9,6 +9,8 @@ import (
 	"io"
 	iofs "io/fs"
 	"math/rand/v2"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -207,44 +209,37 @@ func TestMemFSWalkDir(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestMemFSUnderlay(t *testing.T) {
-	// Set up a MemFS as the underlay with known content.
-	underlay := NewMem()
-	require.NoError(t, underlay.MkdirAll("/assets/sub", 0755))
-	f, err := underlay.Create("/assets/data.txt", WriteCategoryUnspecified)
-	require.NoError(t, err)
-	_, err = f.Write([]byte("hello from underlay"))
-	require.NoError(t, err)
-	require.NoError(t, f.Close())
-	f, err = underlay.Create("/assets/sub/nested.txt", WriteCategoryUnspecified)
-	require.NoError(t, err)
-	_, err = f.Write([]byte("nested content"))
-	require.NoError(t, err)
-	require.NoError(t, f.Close())
+func TestMemFSMountReadOnly(t *testing.T) {
+	// Set up a real temp directory with test files.
+	tmpDir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(tmpDir, "sub"), 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "data.txt"), []byte("hello from mount"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "sub", "nested.txt"), []byte("nested content"), 0644))
 
-	fs := NewMemWithUnderlay(underlay)
+	mfs := NewMem()
+	require.NoError(t, mfs.MountReadOnlyRealDir(tmpDir, "/assets"))
 
-	// Test 1: Read fallthrough — open underlay file
+	// Test 1: Read fallthrough — open mounted file
 	t.Run("ReadFallthrough", func(t *testing.T) {
-		f, err := fs.Open("/assets/data.txt")
+		f, err := mfs.Open("/assets/data.txt")
 		require.NoError(t, err)
 		defer f.Close()
 		buf, err := io.ReadAll(f)
 		require.NoError(t, err)
-		require.Equal(t, "hello from underlay", string(buf))
+		require.Equal(t, "hello from mount", string(buf))
 	})
 
 	// Test 2: Stat fallthrough
 	t.Run("StatFallthrough", func(t *testing.T) {
-		info, err := fs.Stat("/assets/data.txt")
+		info, err := mfs.Stat("/assets/data.txt")
 		require.NoError(t, err)
 		require.Equal(t, "data.txt", info.Name())
-		require.Equal(t, int64(len("hello from underlay")), info.Size())
+		require.Equal(t, int64(len("hello from mount")), info.Size())
 	})
 
 	// Test 3: List fallthrough
 	t.Run("ListFallthrough", func(t *testing.T) {
-		entries, err := fs.List("/assets/")
+		entries, err := mfs.List("/assets/")
 		require.NoError(t, err)
 		sort.Strings(entries)
 		require.Equal(t, []string{"data.txt", "sub"}, entries)
@@ -252,7 +247,7 @@ func TestMemFSUnderlay(t *testing.T) {
 
 	// Test 4: ReadDir fallthrough
 	t.Run("ReadDirFallthrough", func(t *testing.T) {
-		entries, err := fs.ReadDir("/assets/")
+		entries, err := mfs.ReadDir("/assets/")
 		require.NoError(t, err)
 		var names []string
 		for _, e := range entries {
@@ -265,7 +260,7 @@ func TestMemFSUnderlay(t *testing.T) {
 	// Test 5: WalkDir fallthrough
 	t.Run("WalkDirFallthrough", func(t *testing.T) {
 		var paths []string
-		err := fs.WalkDir("/assets", func(p string, d iofs.DirEntry, err error) error {
+		err := mfs.WalkDir("/assets", func(p string, d iofs.DirEntry, err error) error {
 			require.NoError(t, err)
 			paths = append(paths, p)
 			return nil
@@ -278,15 +273,14 @@ func TestMemFSUnderlay(t *testing.T) {
 
 	// Test 6: Disjoint write succeeds
 	t.Run("DisjointWrite", func(t *testing.T) {
-		require.NoError(t, fs.MkdirAll("/work", 0755))
-		f, err := fs.Create("/work/out.txt", WriteCategoryUnspecified)
+		require.NoError(t, mfs.MkdirAll("/work", 0755))
+		f, err := mfs.Create("/work/out.txt", WriteCategoryUnspecified)
 		require.NoError(t, err)
 		_, err = f.Write([]byte("overlay data"))
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
 
-		// Read it back from overlay
-		f, err = fs.Open("/work/out.txt")
+		f, err = mfs.Open("/work/out.txt")
 		require.NoError(t, err)
 		defer f.Close()
 		buf, err := io.ReadAll(f)
@@ -296,41 +290,30 @@ func TestMemFSUnderlay(t *testing.T) {
 
 	// Test 7: MkdirAll conflict detection
 	t.Run("MkdirAllConflict", func(t *testing.T) {
-		err := fs.MkdirAll("/assets", 0755)
+		err := mfs.MkdirAll("/assets", 0755)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "conflicts with underlay directory")
+		require.Contains(t, err.Error(), "conflicts with read-only mount")
 	})
 
 	// Test 8: Create conflict detection
 	t.Run("CreateConflict", func(t *testing.T) {
-		_, err := fs.Create("/assets/data.txt", WriteCategoryUnspecified)
+		_, err := mfs.Create("/assets/data.txt", WriteCategoryUnspecified)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "conflicts with underlay path")
+		require.Contains(t, err.Error(), "conflicts with read-only mount")
 	})
 
-	// Test 9: Underlay wrapper rejects mutations
-	t.Run("UnderlayReadOnly", func(t *testing.T) {
-		ul := fs.Unwrap()
-		require.NotNil(t, ul)
-		_, err := ul.Create("/foo", WriteCategoryUnspecified)
+	// Test 9: Mount rejects duplicate mount point
+	t.Run("DuplicateMount", func(t *testing.T) {
+		err := mfs.MountReadOnlyRealDir(tmpDir, "/assets")
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "read-only filesystem")
-
-		err = ul.Remove("/assets/data.txt")
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "read-only filesystem")
-
-		err = ul.MkdirAll("/newdir", 0755)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "read-only filesystem")
+		require.Contains(t, err.Error(), "already mounted")
 	})
 
-	// Test 10: nil underlay (NewMem) has no regression
-	t.Run("NilUnderlay", func(t *testing.T) {
+	// Test 10: No mounts (NewMem) has no regression
+	t.Run("NoMounts", func(t *testing.T) {
 		plain := NewMem()
 		require.Nil(t, plain.Unwrap())
 
-		// Should behave exactly as before
 		require.NoError(t, plain.MkdirAll("/dir", 0755))
 		f, err := plain.Create("/dir/file", WriteCategoryUnspecified)
 		require.NoError(t, err)
@@ -344,12 +327,34 @@ func TestMemFSUnderlay(t *testing.T) {
 	})
 
 	// Test 11: Overlay directory ownership — file not in overlay dir
-	// doesn't fall through when parent dir exists in overlay
+	// doesn't fall through to mount
 	t.Run("OverlayOwnership", func(t *testing.T) {
-		// /work/ exists in overlay, so /work/nonexistent should NOT
-		// fall through to underlay even if underlay had such a path.
-		_, err := fs.Open("/work/nonexistent")
+		_, err := mfs.Open("/work/nonexistent")
 		require.Error(t, err)
+	})
+
+	// Test 12: Mount non-existent real dir errors
+	t.Run("MountNonExistent", func(t *testing.T) {
+		plain := NewMem()
+		err := plain.MountReadOnlyRealDir("/no/such/dir", "/mnt")
+		require.Error(t, err)
+	})
+
+	// Test 13: defaultFS rejects MountReadOnlyRealDir
+	t.Run("DefaultFSRejects", func(t *testing.T) {
+		err := Default.MountReadOnlyRealDir(tmpDir, "/mnt")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "only supported on MemFS")
+	})
+
+	// Test 14: Open mount point itself as directory
+	t.Run("OpenMountPoint", func(t *testing.T) {
+		f, err := mfs.Open("/assets")
+		require.NoError(t, err)
+		defer f.Close()
+		info, err := f.Stat()
+		require.NoError(t, err)
+		require.True(t, info.IsDir())
 	})
 }
 

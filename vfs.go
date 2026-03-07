@@ -200,7 +200,7 @@ type FS interface {
 	// MountReadOnlyReadDir mounts fromRealDir inside the MemFS at mountPointInsideDir.
 	// This is useful to avoid copying large test assets. Real directories can be
 	// read-only mounted inside MemFS with this call. Attempts to write to
-	// the read-only mount will return erros. The mount point cannot already
+	// the read-only mount will return errors. The mount point cannot already
 	// exist inside the target MemFS.
 	MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error
 }
@@ -383,6 +383,10 @@ func (defaultFS) PathDir(path string) string {
 }
 
 func (defaultFS) Unwrap() FS { return nil }
+
+func (defaultFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	return fmt.Errorf("MountReadOnlyRealDir is only supported on MemFS")
+}
 
 type randomReadsOption struct{}
 

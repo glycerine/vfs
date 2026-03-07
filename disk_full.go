@@ -370,6 +370,10 @@ func (fs *enospcFS) IsReal() bool {
 	return false
 }
 
+func (fs *enospcFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	return fs.inner.MountReadOnlyRealDir(fromRealDir, mountPointInsideDir)
+}
+
 type enospcFile struct {
 	fs    *enospcFS
 	inner File

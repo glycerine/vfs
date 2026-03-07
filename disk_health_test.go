@@ -5,6 +5,7 @@
 package vfs
 
 import (
+	"fmt"
 	"io"
 	iofs "io/fs"
 	"math"
@@ -245,6 +246,10 @@ func (m mockFS) WalkDir(path string, f iofs.WalkDirFunc) error {
 		panic("unimplemented")
 	}
 	return m.WalkDir(path, f)
+}
+
+func (m mockFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	return fmt.Errorf("mockFS: MountReadOnlyRealDir not supported")
 }
 
 var _ FS = &mockFS{}

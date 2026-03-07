@@ -13,6 +13,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"path"
+	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
@@ -99,23 +100,87 @@ type MemFS struct {
 	// set to error if removing an open file.
 	windowsSemantics bool
 	usage            DiskUsage
-	// underlay is a read-only backing FS visible through MemFS.
-	// nil means no underlay (current behavior, zero overhead).
-	underlay FS
+	// mounts maps MemFS mount-point paths (e.g. "/testdata") to
+	// real filesystem directories. Read-only; writes to mounted paths error.
+	// nil means no mounts (current behavior, zero overhead).
+	mounts map[string]string
 }
 
-// MountReadOnlyRealDir returns a MemFS with a directory
-// from the real (non-memory; vfs.Default) file system mounted
-// read-only at the given mountPath.
-//
-// The read-only mounted directory is visible through
-// the MemFS for read operations (Open, Stat,
-// List, ReadDir, WalkDir). Write operations (Create, MkdirAll, etc.) that
-// would conflict with underlay paths return an error. The overlay (MemFS)
-// and read-only mount directory trees must be completely disjoint.
-func (m *MemFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
-	// TODO: implement this please, Claude, and delete this TODO comment.
+// MountReadOnlyRealDir mounts fromRealDir (a real OS directory) inside the
+// MemFS at mountPointInsideDir. The mounted directory is visible through
+// the MemFS for read operations (Open, Stat, List, ReadDir, WalkDir).
+// Write operations to mounted paths return an error. The mount point
+// cannot already exist inside the MemFS.
+func (y *MemFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	// Normalize mount point to have no trailing slash.
+	mountPointInsideDir = strings.TrimRight(mountPointInsideDir, "/")
+	if mountPointInsideDir == "" {
+		return fmt.Errorf("memfs: cannot mount at root")
+	}
+	// Ensure the real directory exists.
+	info, err := os.Stat(fromRealDir)
+	if err != nil {
+		return fmt.Errorf("memfs: MountReadOnlyRealDir: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("memfs: MountReadOnlyRealDir: %q is not a directory", fromRealDir)
+	}
+	y.mu.Lock()
+	defer y.mu.Unlock()
+	if y.mounts != nil {
+		if _, exists := y.mounts[mountPointInsideDir]; exists {
+			return fmt.Errorf("memfs: MountReadOnlyRealDir %q already mounted", mountPointInsideDir)
+		}
+	}
+	// Check mount point doesn't conflict with existing overlay dirs
+	// by walking the in-memory tree directly (we already hold mu).
+	if y.overlayPathExists(mountPointInsideDir) {
+		return fmt.Errorf("memfs: MountReadOnlyRealDir %q conflicts with existing MemFS path", mountPointInsideDir)
+	}
+	if y.mounts == nil {
+		y.mounts = make(map[string]string)
+	}
+	y.mounts[mountPointInsideDir] = fromRealDir
 	return nil
+}
+
+// overlayPathExists checks if a path exists in the in-memory tree.
+// Must be called with y.mu held.
+func (y *MemFS) overlayPathExists(fullname string) bool {
+	name := strings.TrimLeft(fullname, "/")
+	if name == "" || name == "." {
+		return true // root always exists
+	}
+	dir := y.root
+	parts := strings.Split(name, "/")
+	for _, p := range parts {
+		child := dir.children[p]
+		if child == nil {
+			return false
+		}
+		dir = child
+	}
+	return true
+}
+
+// resolveMount checks if fullname falls under any read-only mount.
+// Returns (realPath, mountPoint, true) if matched, or ("", "", false).
+func (y *MemFS) resolveMount(fullname string) (realPath string, mountPoint string, ok bool) {
+	if y.mounts == nil {
+		return "", "", false
+	}
+	// Normalize: ensure leading slash, no trailing slash.
+	name := strings.TrimRight(fullname, "/")
+	for mp, realDir := range y.mounts {
+		if name == mp {
+			return realDir, mp, true
+		}
+		if strings.HasPrefix(name, mp+"/") {
+			rel := name[len(mp)+1:]
+			return filepath.Join(realDir, rel), mp, true
+		}
+	}
+	return "", "", false
 }
 
 // readOnlyFS wraps an FS and rejects all mutation methods.
@@ -164,6 +229,9 @@ func (r *readOnlyFS) Unwrap() FS                                    { return r.i
 func (r *readOnlyFS) ReadDir(dirname string) ([]os.DirEntry, error) { return r.inner.ReadDir(dirname) }
 func (r *readOnlyFS) IsReal() bool                                  { return r.inner.IsReal() }
 func (r *readOnlyFS) WalkDir(path string, f iofs.WalkDirFunc) error { return r.inner.WalkDir(path, f) }
+func (r *readOnlyFS) MountReadOnlyRealDir(fromRealDir string, mountPointInsideDir string) error {
+	return fmt.Errorf("readOnlyFS: MountReadOnlyRealDir: read-only filesystem")
+}
 
 var _ FS = (*readOnlyFS)(nil)
 var _ FS = &MemFS{}
@@ -212,7 +280,7 @@ func (y *MemFS) CrashClone(cfg CrashCloneCfg) *MemFS {
 	defer y.cloneMu.Unlock()
 	newFS := &MemFS{crashable: true}
 	newFS.windowsSemantics = y.windowsSemantics
-	newFS.underlay = y.underlay
+	newFS.mounts = y.mounts
 	newFS.root = y.root.CrashClone(&cfg)
 	return newFS
 }
@@ -291,10 +359,8 @@ func (y *MemFS) Create(fullname string, category DiskWriteCategory) (File, error
 		y.cloneMu.RLock()
 		defer y.cloneMu.RUnlock()
 	}
-	if y.underlay != nil {
-		if _, err := y.underlay.Stat(fullname); err == nil {
-			return nil, fmt.Errorf("memfs: Create %q conflicts with underlay path", fullname)
-		}
+	if _, _, ok := y.resolveMount(fullname); ok {
+		return nil, fmt.Errorf("memfs: Create %q conflicts with read-only mount", fullname)
 	}
 	var ret *memFile
 	err := y.walk(fullname, func(dir *memNode, frag string, final bool) error {
@@ -393,17 +459,13 @@ func (y *MemFS) open(fullname string, openForWrite bool) (File, error) {
 		}
 		return nil
 	})
-	if err != nil {
-		// Walk failed — parent dir doesn't exist in overlay.
-		if y.underlay != nil {
-			return y.underlay.Open(fullname)
+	if err != nil || ret == nil {
+		// Not found in overlay. Try read-only mounts.
+		if realPath, _, ok := y.resolveMount(fullname); ok {
+			return Default.Open(realPath)
 		}
-		return nil, err
-	}
-	if ret == nil {
-		// File not found in overlay. Try underlay before giving up.
-		if y.underlay != nil {
-			return y.underlay.Open(fullname)
+		if err != nil {
+			return nil, err
 		}
 		return nil, &os.PathError{
 			Op:   "open",
@@ -563,10 +625,8 @@ func (y *MemFS) MkdirAll(dirname string, perm os.FileMode) error {
 		y.cloneMu.RLock()
 		defer y.cloneMu.RUnlock()
 	}
-	if y.underlay != nil {
-		if _, err := y.underlay.Stat(dirname); err == nil {
-			return fmt.Errorf("memfs: MkdirAll %q conflicts with underlay directory", dirname)
-		}
+	if _, _, ok := y.resolveMount(dirname); ok {
+		return fmt.Errorf("memfs: MkdirAll %q conflicts with read-only mount", dirname)
 	}
 	return y.walk(dirname, func(dir *memNode, frag string, final bool) error {
 		if frag == "" {
@@ -646,9 +706,11 @@ func (y *MemFS) List(dirname string) ([]string, error) {
 		}
 		return nil
 	})
-	if err != nil && y.underlay != nil {
-		// Directory not found in overlay — try underlay.
-		return y.underlay.List(dirname)
+	if err != nil {
+		// Directory not found in overlay — try read-only mounts.
+		if realPath, _, ok := y.resolveMount(dirname); ok {
+			return Default.List(realPath)
+		}
 	}
 	return ret, err
 }
@@ -708,7 +770,7 @@ func (y *MemFS) GetDiskUsage(string) (DiskUsage, error) {
 }
 
 // Unwrap implements FS.Unwrap.
-func (y *MemFS) Unwrap() FS { return y.underlay }
+func (y *MemFS) Unwrap() FS { return nil }
 
 // UnsafeGetFileDataBuffer returns the buffer holding the data for a file. Must
 // not be used while concurrent updates are happening to the file. The buffer
