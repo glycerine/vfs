@@ -832,6 +832,10 @@ func (f *memFile) Truncate(size int64) error {
 	return nil
 }
 
+func (f *memFile) Name() string {
+	return f.name
+}
+
 func (f *memFile) Close() error {
 	if n := f.n.refs.Add(-1); n < 0 {
 		panic(fmt.Sprintf("pebble: close of unopened file: %d", n))

@@ -279,6 +279,10 @@ func (d *diskHealthCheckingFile) stopTicker() {
 	close(d.stopper)
 }
 
+func (d *diskHealthCheckingFile) Name() string {
+	return d.file.Name()
+}
+
 // Fd implements (vfs.File).Fd.
 func (d *diskHealthCheckingFile) Fd() uintptr {
 	return d.file.Fd()

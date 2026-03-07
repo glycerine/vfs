@@ -372,6 +372,10 @@ func (f *enospcFile) Truncate(size int64) error {
 	return f.inner.Truncate(size)
 }
 
+func (f *enospcFile) Name() string {
+	return f.inner.Name()
+}
+
 func (f *enospcFile) Close() error {
 	return f.inner.Close()
 }

@@ -73,6 +73,8 @@ type File interface {
 	Fd() uintptr
 
 	Truncate(size int64) error
+
+	Name() string
 }
 
 // InvalidFd is a special value returned by File.Fd() when the file is not

@@ -82,6 +82,11 @@ func (m mockFile) SyncTo(int64) (fullSync bool, err error) {
 	return false, nil
 }
 
+func (m mockFile) Name() string {
+	panic("unimplemented")
+	return ""
+}
+
 var _ File = &mockFile{}
 
 type mockFS struct {
