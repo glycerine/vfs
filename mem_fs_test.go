@@ -7,6 +7,7 @@ package vfs
 import (
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"math/rand/v2"
 	"sort"
 	"strconv"
@@ -138,6 +139,72 @@ func TestMemFile(t *testing.T) {
 	if got := string(buf); got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}
+}
+
+func TestMemFSWalkDir(t *testing.T) {
+	fs := NewMem()
+
+	// Create directory structure
+	require.NoError(t, fs.MkdirAll("/a/b/c", 0755))
+	require.NoError(t, fs.MkdirAll("/a/d", 0755))
+	require.NoError(t, fs.MkdirAll("/x", 0755))
+
+	// Create files
+	for _, p := range []string{"/a/b/c/f1", "/a/b/f2", "/a/d/f3", "/x/f4", "/top"} {
+		f, err := fs.Create(p, WriteCategoryUnspecified)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+	}
+
+	// Test 1: Full walk from root, collect all paths
+	var paths []string
+	err := fs.WalkDir("/", func(path string, d iofs.DirEntry, err error) error {
+		require.NoError(t, err)
+		paths = append(paths, path)
+		return nil
+	})
+	require.NoError(t, err)
+
+	expected := []string{
+		"/",
+		"/a",
+		"/a/b",
+		"/a/b/c",
+		"/a/b/c/f1",
+		"/a/b/f2",
+		"/a/d",
+		"/a/d/f3",
+		"/top",
+		"/x",
+		"/x/f4",
+	}
+	require.Equal(t, expected, paths)
+
+	// Test 2: SkipDir skips children
+	var skipped []string
+	err = fs.WalkDir("/", func(path string, d iofs.DirEntry, err error) error {
+		require.NoError(t, err)
+		skipped = append(skipped, path)
+		if path == "/a/b" {
+			return iofs.SkipDir
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	// /a/b is visited but its children are not; /a/d continues
+	require.Contains(t, skipped, "/a/b")
+	for _, p := range skipped {
+		require.NotEqual(t, "/a/b/c", p)
+		require.NotEqual(t, "/a/b/f2", p)
+	}
+	require.Contains(t, skipped, "/a/d")
+
+	// Test 3: Non-existent root
+	err = fs.WalkDir("/nonexistent", func(path string, d iofs.DirEntry, err error) error {
+		require.Error(t, err)
+		return err
+	})
+	require.Error(t, err)
 }
 
 func TestMemFSLock(t *testing.T) {

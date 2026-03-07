@@ -684,36 +684,49 @@ func (y *MemFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return entries, nil
 }
 
-func (y *MemFS) WalkDir(path string, f iofs.WalkDirFunc) error {
-	// real/default does: return filepath.WalkDir(path, f)
-	innerF := func(dir *memNode, frag string, final bool) error {
-		vv("MemFS.WalkDir.innerF sees callback: dir='%#v'; frag='%v'; final='%v'", dir, frag, final)
-
-		//if dir.isDir{}
-		/*
-			         dirname := ?  // how to get?
-					// Build the exact path as MemFS expects it
-					fullPath := y.PathJoin(dirname, name)
-
-					// 3. Stat the file to get its os.FileInfo
-					info, err := y.Stat(fullPath)
-					if err != nil {
-						if os.IsNotExist(err) {
-							// The file was deleted in another
-							// goroutine between List and Stat.
-							// Standard POSIX behavior is to just skip it.
-							continue
-						}
-						return nil, err
-					}
-
-					// 4. Wrap the FileInfo into a standard DirEntry (requires Go 1.16+)
-					dirEntry := fs.FileInfoToDirEntry(info)
-			        f(fullpath, dirEntry, nil)
-		*/
+func (y *MemFS) WalkDir(root string, fn iofs.WalkDirFunc) error {
+	info, err := y.Stat(root)
+	if err != nil {
+		err = fn(root, nil, err)
+	} else {
+		err = y.memWalkDir(root, iofs.FileInfoToDirEntry(info), fn)
+	}
+	if err == iofs.SkipDir || err == iofs.SkipAll {
 		return nil
 	}
-	return y.walk(path, innerF)
+	return err
+}
+
+func (y *MemFS) memWalkDir(p string, d iofs.DirEntry, fn iofs.WalkDirFunc) error {
+	if err := fn(p, d, nil); err != nil || !d.IsDir() {
+		if err == iofs.SkipDir && d.IsDir() {
+			err = nil
+		}
+		return err
+	}
+
+	entries, err := y.ReadDir(p)
+	if err != nil {
+		if err1 := fn(p, d, err); err1 != nil {
+			return err1
+		}
+		return nil
+	}
+
+	slices.SortFunc(entries, func(a, b iofs.DirEntry) int {
+		return strings.Compare(a.Name(), b.Name())
+	})
+
+	for _, entry := range entries {
+		childPath := y.PathJoin(p, entry.Name())
+		if err := y.memWalkDir(childPath, entry, fn); err != nil {
+			if err == iofs.SkipDir {
+				continue
+			}
+			return err
+		}
+	}
+	return nil
 }
 
 // memNode holds a file's data or a directory's children.
