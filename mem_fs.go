@@ -99,8 +99,71 @@ type MemFS struct {
 	// set to error if removing an open file.
 	windowsSemantics bool
 	usage            DiskUsage
+	// underlay is a read-only backing FS visible through MemFS.
+	// nil means no underlay (current behavior, zero overhead).
+	underlay FS
 }
 
+// NewMemWithUnderlay returns a MemFS with a read-only underlay filesystem.
+// The underlay is visible through the MemFS for read operations (Open, Stat,
+// List, ReadDir, WalkDir). Write operations (Create, MkdirAll, etc.) that
+// would conflict with underlay paths return an error. The overlay (MemFS)
+// and underlay directory trees must be completely disjoint.
+func NewMemWithUnderlay(underlay FS) *MemFS {
+	return &MemFS{
+		root:     newRootMemNode(),
+		underlay: &readOnlyFS{inner: underlay},
+	}
+}
+
+// readOnlyFS wraps an FS and rejects all mutation methods.
+type readOnlyFS struct{ inner FS }
+
+func (r *readOnlyFS) Create(name string, _ DiskWriteCategory) (File, error) {
+	return nil, fmt.Errorf("readOnlyFS: Create(%q): read-only filesystem", name)
+}
+func (r *readOnlyFS) Link(oldname, newname string) error {
+	return fmt.Errorf("readOnlyFS: Link(%q, %q): read-only filesystem", oldname, newname)
+}
+func (r *readOnlyFS) Open(name string, opts ...OpenOption) (File, error) {
+	return r.inner.Open(name, opts...)
+}
+func (r *readOnlyFS) OpenReadWrite(name string, _ DiskWriteCategory, opts ...OpenOption) (File, error) {
+	return nil, fmt.Errorf("readOnlyFS: OpenReadWrite(%q): read-only filesystem", name)
+}
+func (r *readOnlyFS) OpenDir(name string) (File, error) {
+	return r.inner.OpenDir(name)
+}
+func (r *readOnlyFS) Remove(name string) error {
+	return fmt.Errorf("readOnlyFS: Remove(%q): read-only filesystem", name)
+}
+func (r *readOnlyFS) RemoveAll(name string) error {
+	return fmt.Errorf("readOnlyFS: RemoveAll(%q): read-only filesystem", name)
+}
+func (r *readOnlyFS) Rename(oldname, newname string) error {
+	return fmt.Errorf("readOnlyFS: Rename(%q, %q): read-only filesystem", oldname, newname)
+}
+func (r *readOnlyFS) ReuseForWrite(oldname, newname string, _ DiskWriteCategory) (File, error) {
+	return nil, fmt.Errorf("readOnlyFS: ReuseForWrite(%q, %q): read-only filesystem", oldname, newname)
+}
+func (r *readOnlyFS) MkdirAll(dir string, perm os.FileMode) error {
+	return fmt.Errorf("readOnlyFS: MkdirAll(%q): read-only filesystem", dir)
+}
+func (r *readOnlyFS) Lock(name string) (io.Closer, error) {
+	return nil, fmt.Errorf("readOnlyFS: Lock(%q): read-only filesystem", name)
+}
+func (r *readOnlyFS) List(dir string) ([]string, error)          { return r.inner.List(dir) }
+func (r *readOnlyFS) Stat(name string) (FileInfo, error)         { return r.inner.Stat(name) }
+func (r *readOnlyFS) PathBase(p string) string                   { return r.inner.PathBase(p) }
+func (r *readOnlyFS) PathJoin(elem ...string) string             { return r.inner.PathJoin(elem...) }
+func (r *readOnlyFS) PathDir(p string) string                    { return r.inner.PathDir(p) }
+func (r *readOnlyFS) GetDiskUsage(p string) (DiskUsage, error)   { return r.inner.GetDiskUsage(p) }
+func (r *readOnlyFS) Unwrap() FS                                 { return r.inner }
+func (r *readOnlyFS) ReadDir(dirname string) ([]os.DirEntry, error) { return r.inner.ReadDir(dirname) }
+func (r *readOnlyFS) IsReal() bool                               { return r.inner.IsReal() }
+func (r *readOnlyFS) WalkDir(path string, f iofs.WalkDirFunc) error { return r.inner.WalkDir(path, f) }
+
+var _ FS = (*readOnlyFS)(nil)
 var _ FS = &MemFS{}
 
 // UseWindowsSemantics configures whether the MemFS implements Windows-style
@@ -147,6 +210,7 @@ func (y *MemFS) CrashClone(cfg CrashCloneCfg) *MemFS {
 	defer y.cloneMu.Unlock()
 	newFS := &MemFS{crashable: true}
 	newFS.windowsSemantics = y.windowsSemantics
+	newFS.underlay = y.underlay
 	newFS.root = y.root.CrashClone(&cfg)
 	return newFS
 }
@@ -224,6 +288,11 @@ func (y *MemFS) Create(fullname string, category DiskWriteCategory) (File, error
 	if y.crashable {
 		y.cloneMu.RLock()
 		defer y.cloneMu.RUnlock()
+	}
+	if y.underlay != nil {
+		if _, err := y.underlay.Stat(fullname); err == nil {
+			return nil, fmt.Errorf("memfs: Create %q conflicts with underlay path", fullname)
+		}
 	}
 	var ret *memFile
 	err := y.walk(fullname, func(dir *memNode, frag string, final bool) error {
@@ -323,9 +392,17 @@ func (y *MemFS) open(fullname string, openForWrite bool) (File, error) {
 		return nil
 	})
 	if err != nil {
+		// Walk failed — parent dir doesn't exist in overlay.
+		if y.underlay != nil {
+			return y.underlay.Open(fullname)
+		}
 		return nil, err
 	}
 	if ret == nil {
+		// File not found in overlay. Try underlay before giving up.
+		if y.underlay != nil {
+			return y.underlay.Open(fullname)
+		}
 		return nil, &os.PathError{
 			Op:   "open",
 			Path: fullname,
@@ -484,6 +561,11 @@ func (y *MemFS) MkdirAll(dirname string, perm os.FileMode) error {
 		y.cloneMu.RLock()
 		defer y.cloneMu.RUnlock()
 	}
+	if y.underlay != nil {
+		if _, err := y.underlay.Stat(dirname); err == nil {
+			return fmt.Errorf("memfs: MkdirAll %q conflicts with underlay directory", dirname)
+		}
+	}
 	return y.walk(dirname, func(dir *memNode, frag string, final bool) error {
 		if frag == "" {
 			if final {
@@ -562,6 +644,10 @@ func (y *MemFS) List(dirname string) ([]string, error) {
 		}
 		return nil
 	})
+	if err != nil && y.underlay != nil {
+		// Directory not found in overlay — try underlay.
+		return y.underlay.List(dirname)
+	}
 	return ret, err
 }
 
@@ -620,7 +706,7 @@ func (y *MemFS) GetDiskUsage(string) (DiskUsage, error) {
 }
 
 // Unwrap implements FS.Unwrap.
-func (*MemFS) Unwrap() FS { return nil }
+func (y *MemFS) Unwrap() FS { return y.underlay }
 
 // UnsafeGetFileDataBuffer returns the buffer holding the data for a file. Must
 // not be used while concurrent updates are happening to the file. The buffer

@@ -207,6 +207,152 @@ func TestMemFSWalkDir(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestMemFSUnderlay(t *testing.T) {
+	// Set up a MemFS as the underlay with known content.
+	underlay := NewMem()
+	require.NoError(t, underlay.MkdirAll("/assets/sub", 0755))
+	f, err := underlay.Create("/assets/data.txt", WriteCategoryUnspecified)
+	require.NoError(t, err)
+	_, err = f.Write([]byte("hello from underlay"))
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+	f, err = underlay.Create("/assets/sub/nested.txt", WriteCategoryUnspecified)
+	require.NoError(t, err)
+	_, err = f.Write([]byte("nested content"))
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	fs := NewMemWithUnderlay(underlay)
+
+	// Test 1: Read fallthrough — open underlay file
+	t.Run("ReadFallthrough", func(t *testing.T) {
+		f, err := fs.Open("/assets/data.txt")
+		require.NoError(t, err)
+		defer f.Close()
+		buf, err := io.ReadAll(f)
+		require.NoError(t, err)
+		require.Equal(t, "hello from underlay", string(buf))
+	})
+
+	// Test 2: Stat fallthrough
+	t.Run("StatFallthrough", func(t *testing.T) {
+		info, err := fs.Stat("/assets/data.txt")
+		require.NoError(t, err)
+		require.Equal(t, "data.txt", info.Name())
+		require.Equal(t, int64(len("hello from underlay")), info.Size())
+	})
+
+	// Test 3: List fallthrough
+	t.Run("ListFallthrough", func(t *testing.T) {
+		entries, err := fs.List("/assets/")
+		require.NoError(t, err)
+		sort.Strings(entries)
+		require.Equal(t, []string{"data.txt", "sub"}, entries)
+	})
+
+	// Test 4: ReadDir fallthrough
+	t.Run("ReadDirFallthrough", func(t *testing.T) {
+		entries, err := fs.ReadDir("/assets/")
+		require.NoError(t, err)
+		var names []string
+		for _, e := range entries {
+			names = append(names, e.Name())
+		}
+		sort.Strings(names)
+		require.Equal(t, []string{"data.txt", "sub"}, names)
+	})
+
+	// Test 5: WalkDir fallthrough
+	t.Run("WalkDirFallthrough", func(t *testing.T) {
+		var paths []string
+		err := fs.WalkDir("/assets", func(p string, d iofs.DirEntry, err error) error {
+			require.NoError(t, err)
+			paths = append(paths, p)
+			return nil
+		})
+		require.NoError(t, err)
+		sort.Strings(paths)
+		expected := []string{"/assets", "/assets/data.txt", "/assets/sub", "/assets/sub/nested.txt"}
+		require.Equal(t, expected, paths)
+	})
+
+	// Test 6: Disjoint write succeeds
+	t.Run("DisjointWrite", func(t *testing.T) {
+		require.NoError(t, fs.MkdirAll("/work", 0755))
+		f, err := fs.Create("/work/out.txt", WriteCategoryUnspecified)
+		require.NoError(t, err)
+		_, err = f.Write([]byte("overlay data"))
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+
+		// Read it back from overlay
+		f, err = fs.Open("/work/out.txt")
+		require.NoError(t, err)
+		defer f.Close()
+		buf, err := io.ReadAll(f)
+		require.NoError(t, err)
+		require.Equal(t, "overlay data", string(buf))
+	})
+
+	// Test 7: MkdirAll conflict detection
+	t.Run("MkdirAllConflict", func(t *testing.T) {
+		err := fs.MkdirAll("/assets", 0755)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "conflicts with underlay directory")
+	})
+
+	// Test 8: Create conflict detection
+	t.Run("CreateConflict", func(t *testing.T) {
+		_, err := fs.Create("/assets/data.txt", WriteCategoryUnspecified)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "conflicts with underlay path")
+	})
+
+	// Test 9: Underlay wrapper rejects mutations
+	t.Run("UnderlayReadOnly", func(t *testing.T) {
+		ul := fs.Unwrap()
+		require.NotNil(t, ul)
+		_, err := ul.Create("/foo", WriteCategoryUnspecified)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "read-only filesystem")
+
+		err = ul.Remove("/assets/data.txt")
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "read-only filesystem")
+
+		err = ul.MkdirAll("/newdir", 0755)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "read-only filesystem")
+	})
+
+	// Test 10: nil underlay (NewMem) has no regression
+	t.Run("NilUnderlay", func(t *testing.T) {
+		plain := NewMem()
+		require.Nil(t, plain.Unwrap())
+
+		// Should behave exactly as before
+		require.NoError(t, plain.MkdirAll("/dir", 0755))
+		f, err := plain.Create("/dir/file", WriteCategoryUnspecified)
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+
+		_, err = plain.Open("/nonexistent")
+		require.Error(t, err)
+
+		_, err = plain.List("/nonexistent/")
+		require.Error(t, err)
+	})
+
+	// Test 11: Overlay directory ownership — file not in overlay dir
+	// doesn't fall through when parent dir exists in overlay
+	t.Run("OverlayOwnership", func(t *testing.T) {
+		// /work/ exists in overlay, so /work/nonexistent should NOT
+		// fall through to underlay even if underlay had such a path.
+		_, err := fs.Open("/work/nonexistent")
+		require.Error(t, err)
+	})
+}
+
 func TestMemFSLock(t *testing.T) {
 	filesystems := map[string]FS{}
 	fileLocks := map[string]io.Closer{}
