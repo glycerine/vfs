@@ -54,7 +54,7 @@ type linuxFile struct {
 }
 
 func (d *linuxFile) Truncate(size int64) (err error) {
-	return d.Truncate(size)
+	return d.File.Truncate(size)
 }
 
 func (f *linuxFile) Prefetch(offset int64, length int64) error {
