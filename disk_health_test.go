@@ -101,6 +101,7 @@ type mockFS struct {
 	reuseForWrite func(string, string, DiskWriteCategory) (File, error)
 	stat          func(string) (FileInfo, error)
 	getDiskUsage  func(string) (DiskUsage, error)
+	readDir       func(string) ([]os.DirEntry, error)
 }
 
 func (m mockFS) Create(name string, category DiskWriteCategory) (File, error) {
@@ -222,6 +223,13 @@ func (m mockFS) GetDiskUsage(path string) (DiskUsage, error) {
 }
 
 func (m mockFS) Unwrap() FS { return nil }
+
+func (m mockFS) ReadDir(dirname string) ([]os.DirEntry, error) {
+	if m.readDir == nil {
+		panic("unimplemented")
+	}
+	return m.ReadDir(dirname)
+}
 
 var _ FS = &mockFS{}
 

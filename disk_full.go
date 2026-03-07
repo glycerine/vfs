@@ -357,6 +357,10 @@ func (fs *enospcFS) GetDiskUsage(path string) (DiskUsage, error) {
 	return fs.inner.GetDiskUsage(path)
 }
 
+func (fs *enospcFS) ReadDir(dirname string) ([]os.DirEntry, error) {
+	return fs.inner.ReadDir(dirname)
+}
+
 type enospcFile struct {
 	fs    *enospcFS
 	inner File

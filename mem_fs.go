@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"maps"
 	"math/rand/v2"
 	"os"
@@ -632,6 +633,64 @@ func (y *MemFS) UnsafeGetFileDataBuffer(fullname string) ([]byte, error) {
 	defer f.Close()
 	return f.(*memFile).n.mu.data, nil
 }
+
+// ReadDir implements FS.ReadDir.
+//
+// Inside MemFS, you could technically lock the
+// internal mutex and write a custom iterator
+// to dig through the unexported memNode tree.
+// However, I strongly advise against this. Pebble's
+// crash-simulation (StrictFS) relies heavily
+// on intercepted state logic. If you bypass
+// the public methods, you risk reading "un-synced"
+// files during a simulated crash.
+//
+// Instead, because MemFS operates entirely in
+// RAM without system call overhead, composing y.List and y.Stat is
+// the safest approach. It executes in nanoseconds and
+// perfectly preserves Pebble's crash-simulation integrity.
+func (y *MemFS) ReadDir(dirname string) ([]os.DirEntry, error) {
+	// 1. Get the sorted slice of filenames.
+	// This safely handles MemFS internal locking
+	// and StrictFS visibility logic.
+	names, err := y.List(dirname)
+	if err != nil {
+		return nil, err
+	}
+
+	entries := make([]os.DirEntry, 0, len(names))
+	for _, name := range names {
+		// 2. Build the exact path as MemFS expects it
+		fullPath := y.PathJoin(dirname, name)
+
+		// 3. Stat the file to get its os.FileInfo
+		info, err := y.Stat(fullPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// The file was deleted in another
+				// goroutine between List and Stat.
+				// Standard POSIX behavior is to just skip it.
+				continue
+			}
+			return nil, err
+		}
+
+		// 4. Wrap the FileInfo into a standard DirEntry (requires Go 1.16+)
+		entries = append(entries, fs.FileInfoToDirEntry(info))
+	}
+
+	return entries, nil
+}
+
+/*
+func (y *MemFS) ReadDir(dir string) ([]os.DirEntry, error) {
+	if y.crashable {
+		y.cloneMu.RLock()
+		defer y.cloneMu.RUnlock()
+	}
+
+}
+*/
 
 // memNode holds a file's data or a directory's children.
 type memNode struct {

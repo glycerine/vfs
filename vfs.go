@@ -185,6 +185,10 @@ type FS interface {
 	//
 	// Returns nil if this is not a wrapping filesystem.
 	Unwrap() FS
+
+	// ReadDir reads the named directory, returning
+	// all its directory entries sorted by filename.
+	ReadDir(dirname string) ([]os.DirEntry, error)
 }
 
 // A DeviceID uniquely identifies a block device on which filesystem data is
@@ -321,6 +325,10 @@ func (fs defaultFS) ReuseForWrite(
 
 func (defaultFS) MkdirAll(dir string, perm os.FileMode) error {
 	return errors.WithStack(os.MkdirAll(dir, perm))
+}
+
+func (defaultFS) ReadDir(dir string) ([]os.DirEntry, error) {
+	return os.ReadDir(dir)
 }
 
 func (defaultFS) List(dir string) ([]string, error) {
