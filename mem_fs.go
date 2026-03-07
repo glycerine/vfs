@@ -634,6 +634,8 @@ func (y *MemFS) UnsafeGetFileDataBuffer(fullname string) ([]byte, error) {
 	return f.(*memFile).n.mu.data, nil
 }
 
+func (y *MemFS) IsReal() bool { return false }
+
 // ReadDir implements FS.ReadDir.
 //
 // Inside MemFS, you could technically lock the

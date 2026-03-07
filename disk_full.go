@@ -361,6 +361,10 @@ func (fs *enospcFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return fs.inner.ReadDir(dirname)
 }
 
+func (fs *enospcFS) IsReal() bool {
+	return false
+}
+
 type enospcFile struct {
 	fs    *enospcFS
 	inner File

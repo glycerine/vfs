@@ -229,6 +229,8 @@ func (m mockFS) GetDiskUsage(path string) (DiskUsage, error) {
 
 func (m mockFS) Unwrap() FS { return nil }
 
+func (m mockFS) IsReal() bool { return false }
+
 func (m mockFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	if m.readDir == nil {
 		panic("unimplemented")

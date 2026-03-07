@@ -191,6 +191,8 @@ type FS interface {
 	// ReadDir reads the named directory, returning
 	// all its directory entries sorted by filename.
 	ReadDir(dirname string) ([]os.DirEntry, error)
+
+	IsReal() bool
 }
 
 // A DeviceID uniquely identifies a block device on which filesystem data is
@@ -328,6 +330,8 @@ func (fs defaultFS) ReuseForWrite(
 func (defaultFS) MkdirAll(dir string, perm os.FileMode) error {
 	return errors.WithStack(os.MkdirAll(dir, perm))
 }
+
+func (defaultFS) IsReal() bool { return true }
 
 func (defaultFS) ReadDir(dir string) ([]os.DirEntry, error) {
 	return os.ReadDir(dir)

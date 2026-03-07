@@ -728,6 +728,8 @@ func (d *diskHealthCheckingFS) ReadDir(dirname string) ([]os.DirEntry, error) {
 	return d.fs.ReadDir(dirname)
 }
 
+func (d *diskHealthCheckingFS) IsReal() bool { return false }
+
 // Close implements io.Closer. Close stops the long-running goroutine that
 // monitors for slow filesystem metadata operations. Close may be called
 // multiple times. If the filesystem is used after Close has been called, a new
