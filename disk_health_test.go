@@ -28,6 +28,10 @@ func (m mockFile) Close() error {
 	return nil
 }
 
+func (m mockFile) Truncate(size int64) error {
+	panic("unimplemented")
+}
+
 func (m mockFile) Read(p []byte) (n int, err error) {
 	panic("unimplemented")
 }
