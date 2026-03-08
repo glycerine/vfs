@@ -100,9 +100,10 @@ type MemFS struct {
 	// set to error if removing an open file.
 	windowsSemantics bool
 	usage            DiskUsage
+
 	// mounts maps MemFS mount-point paths (e.g. "/testdata") to
 	// real filesystem directories. Read-only; writes to mounted paths error.
-	// nil means no mounts (current behavior, zero overhead).
+	// nil means no mounts (prior behavior, zero overhead if mounts are not used).
 	mounts map[string]string
 }
 

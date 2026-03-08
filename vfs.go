@@ -240,16 +240,6 @@ func (fi defaultFileInfo) DeviceID() DeviceID {
 	return deviceIDFromFileInfo(fi.FileInfo)
 }
 
-// DiskUsage summarizes disk space usage on a filesystem.
-type DiskUsage struct {
-	// Total disk space available to the current process in bytes.
-	AvailBytes uint64
-	// Total disk space in bytes.
-	TotalBytes uint64
-	// Used disk space in bytes.
-	UsedBytes uint64
-}
-
 // Default is a FS implementation backed by the underlying operating system's
 // file system.
 var Default FS = defaultFS{}
