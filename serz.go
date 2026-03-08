@@ -87,8 +87,13 @@ func (y *MemFS) Save(path string) error {
 	}
 
 	w := msgp.NewWriter(fd)
+
+	//out := bytes.NewBuffer(make([]byte, 0, 1<<20))
+	//compressor := s2.NewWriter(out)
+
 	o.EncodeMsg(w)
 	w.Flush()
+	//compressor.Close()
 
 	return nil
 }
