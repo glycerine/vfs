@@ -32,35 +32,35 @@ import (
 // DiskUsage summarizes disk space usage on a filesystem.
 type DiskUsage struct {
 	// Total disk space available to the current process in bytes.
-	AvailBytes uint64
+	AvailBytes uint64 `zid:"0"`
 	// Total disk space in bytes.
-	TotalBytes uint64
+	TotalBytes uint64 `zid:"1"`
 	// Used disk space in bytes.
-	UsedBytes uint64
+	UsedBytes uint64 `zid:"2"`
 }
 
 // SerzMemFS is the serialized to disk version of a MemFS.
 type SerzMemFS struct {
-	Root *SerzMemNode
+	Root *SerzMemNode `zid:"0"`
 
-	LockedFiles map[string]struct{}
+	LockedFiles map[string]struct{} `zid:"1"`
 
-	Crashable bool
+	Crashable bool `zid:"2"`
 
-	WindowsSemantics bool
-	Usage            DiskUsage
+	WindowsSemantics bool      `zid:"3"`
+	Usage            DiskUsage `zid:"4"`
 
-	Mounts map[string]string
+	Mounts map[string]string `zid:"5"`
 }
 
 // SerzMemNode is the serialized version of memNode.
 type SerzMemNode struct {
-	IsDir bool
+	IsDir bool `zid:"0"`
 
-	Data       []byte
-	SyncedData []byte
-	ModTime    time.Time
+	Data       []byte    `zid:"1"`
+	SyncedData []byte    `zid:"2"`
+	ModTime    time.Time `zid:"3"`
 
-	Children       map[string]*SerzMemNode
-	SyncedChildren map[string]*SerzMemNode
+	Children       map[string]*SerzMemNode `zid:"4"`
+	SyncedChildren map[string]*SerzMemNode `zid:"5"`
 }

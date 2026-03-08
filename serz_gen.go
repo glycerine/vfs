@@ -72,19 +72,19 @@ doneWithStruct0zgensym_965f3afadc761adf_1:
 		switch curField0zgensym_965f3afadc761adf_1 {
 		// -- templateDecodeMsg ends here --
 
-		case "AvailBytes__u64":
+		case "AvailBytes_zid00_u64":
 			found0zgensym_965f3afadc761adf_1[0] = true
 			z.AvailBytes, err = dc.ReadUint64()
 			if err != nil {
 				return
 			}
-		case "TotalBytes__u64":
+		case "TotalBytes_zid01_u64":
 			found0zgensym_965f3afadc761adf_1[1] = true
 			z.TotalBytes, err = dc.ReadUint64()
 			if err != nil {
 				return
 			}
-		case "UsedBytes__u64":
+		case "UsedBytes_zid02_u64":
 			found0zgensym_965f3afadc761adf_1[2] = true
 			z.UsedBytes, err = dc.ReadUint64()
 			if err != nil {
@@ -113,7 +113,7 @@ doneWithStruct0zgensym_965f3afadc761adf_1:
 }
 
 // fields of DiskUsage
-var decodeMsgFieldOrder0zgensym_965f3afadc761adf_1 = []string{"AvailBytes__u64", "TotalBytes__u64", "UsedBytes__u64"}
+var decodeMsgFieldOrder0zgensym_965f3afadc761adf_1 = []string{"AvailBytes_zid00_u64", "TotalBytes_zid01_u64", "UsedBytes_zid02_u64"}
 
 var decodeMsgFieldSkip0zgensym_965f3afadc761adf_1 = []bool{false, false, false}
 
@@ -166,8 +166,8 @@ func (z *DiskUsage) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_2[0] {
-		// write "AvailBytes__u64"
-		err = en.Append(0xaf, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// write "AvailBytes_zid00_u64"
+		err = en.Append(0xb4, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x75, 0x36, 0x34)
 		if err != nil {
 			return err
 		}
@@ -178,8 +178,8 @@ func (z *DiskUsage) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_2[1] {
-		// write "TotalBytes__u64"
-		err = en.Append(0xaf, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// write "TotalBytes_zid01_u64"
+		err = en.Append(0xb4, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x75, 0x36, 0x34)
 		if err != nil {
 			return err
 		}
@@ -190,8 +190,8 @@ func (z *DiskUsage) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_2[2] {
-		// write "UsedBytes__u64"
-		err = en.Append(0xae, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// write "UsedBytes_zid02_u64"
+		err = en.Append(0xb3, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x75, 0x36, 0x34)
 		if err != nil {
 			return err
 		}
@@ -218,20 +218,20 @@ func (z *DiskUsage) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendMapHeader(o, fieldsInUse)
 
 	if !empty[0] {
-		// string "AvailBytes__u64"
-		o = append(o, 0xaf, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// string "AvailBytes_zid00_u64"
+		o = append(o, 0xb4, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x75, 0x36, 0x34)
 		o = msgp.AppendUint64(o, z.AvailBytes)
 	}
 
 	if !empty[1] {
-		// string "TotalBytes__u64"
-		o = append(o, 0xaf, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// string "TotalBytes_zid01_u64"
+		o = append(o, 0xb4, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x75, 0x36, 0x34)
 		o = msgp.AppendUint64(o, z.TotalBytes)
 	}
 
 	if !empty[2] {
-		// string "UsedBytes__u64"
-		o = append(o, 0xae, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+		// string "UsedBytes_zid02_u64"
+		o = append(o, 0xb3, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x75, 0x36, 0x34)
 		o = msgp.AppendUint64(o, z.UsedBytes)
 	}
 
@@ -303,21 +303,21 @@ doneWithStruct4zgensym_965f3afadc761adf_5:
 		switch curField4zgensym_965f3afadc761adf_5 {
 		// -- templateUnmarshalMsg ends here --
 
-		case "AvailBytes__u64":
+		case "AvailBytes_zid00_u64":
 			found4zgensym_965f3afadc761adf_5[0] = true
 			z.AvailBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "TotalBytes__u64":
+		case "TotalBytes_zid01_u64":
 			found4zgensym_965f3afadc761adf_5[1] = true
 			z.TotalBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "UsedBytes__u64":
+		case "UsedBytes_zid02_u64":
 			found4zgensym_965f3afadc761adf_5[2] = true
 			z.UsedBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
@@ -347,13 +347,13 @@ doneWithStruct4zgensym_965f3afadc761adf_5:
 }
 
 // fields of DiskUsage
-var unmarshalMsgFieldOrder4zgensym_965f3afadc761adf_5 = []string{"AvailBytes__u64", "TotalBytes__u64", "UsedBytes__u64"}
+var unmarshalMsgFieldOrder4zgensym_965f3afadc761adf_5 = []string{"AvailBytes_zid00_u64", "TotalBytes_zid01_u64", "UsedBytes_zid02_u64"}
 
 var unmarshalMsgFieldSkip4zgensym_965f3afadc761adf_5 = []bool{false, false, false}
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *DiskUsage) Msgsize() (s int) {
-	s = 1 + 16 + msgp.Uint64Size + 16 + msgp.Uint64Size + 15 + msgp.Uint64Size
+	s = 1 + 21 + msgp.Uint64Size + 21 + msgp.Uint64Size + 20 + msgp.Uint64Size
 	return
 }
 func (z *DiskUsage) Gstring() (r string) {
@@ -429,7 +429,7 @@ doneWithStruct8zgensym_965f3afadc761adf_9:
 		switch curField8zgensym_965f3afadc761adf_9 {
 		// -- templateDecodeMsg ends here --
 
-		case "Root__ptr":
+		case "Root_zid00_ptr":
 			found8zgensym_965f3afadc761adf_9[0] = true
 			if dc.IsNil() {
 				err = dc.ReadNil()
@@ -457,19 +457,19 @@ doneWithStruct8zgensym_965f3afadc761adf_9:
 					return
 				}
 			}
-		case "Crashable__boo":
+		case "Crashable_zid02_boo":
 			found8zgensym_965f3afadc761adf_9[2] = true
 			z.Crashable, err = dc.ReadBool()
 			if err != nil {
 				return
 			}
-		case "WindowsSemantics__boo":
+		case "WindowsSemantics_zid03_boo":
 			found8zgensym_965f3afadc761adf_9[3] = true
 			z.WindowsSemantics, err = dc.ReadBool()
 			if err != nil {
 				return
 			}
-		case "Usage__rct":
+		case "Usage_zid04_rct":
 			found8zgensym_965f3afadc761adf_9[4] = true
 			const maxFields10zgensym_965f3afadc761adf_11 = 3
 
@@ -520,19 +520,19 @@ doneWithStruct8zgensym_965f3afadc761adf_9:
 				switch curField10zgensym_965f3afadc761adf_11 {
 				// -- templateDecodeMsg ends here --
 
-				case "AvailBytes__u64":
+				case "AvailBytes_zid00_u64":
 					found10zgensym_965f3afadc761adf_11[0] = true
 					z.Usage.AvailBytes, err = dc.ReadUint64()
 					if err != nil {
 						return
 					}
-				case "TotalBytes__u64":
+				case "TotalBytes_zid01_u64":
 					found10zgensym_965f3afadc761adf_11[1] = true
 					z.Usage.TotalBytes, err = dc.ReadUint64()
 					if err != nil {
 						return
 					}
-				case "UsedBytes__u64":
+				case "UsedBytes_zid02_u64":
 					found10zgensym_965f3afadc761adf_11[2] = true
 					z.Usage.UsedBytes, err = dc.ReadUint64()
 					if err != nil {
@@ -549,7 +549,7 @@ doneWithStruct8zgensym_965f3afadc761adf_9:
 				dc.PopAlwaysNil()
 			}
 
-		case "Mounts__map":
+		case "Mounts_zid05_map":
 			found8zgensym_965f3afadc761adf_9[5] = true
 			var zgensym_965f3afadc761adf_12 uint32
 			zgensym_965f3afadc761adf_12, err = dc.ReadMapHeader()
@@ -600,12 +600,12 @@ doneWithStruct8zgensym_965f3afadc761adf_9:
 }
 
 // fields of SerzMemFS
-var decodeMsgFieldOrder8zgensym_965f3afadc761adf_9 = []string{"Root__ptr", "", "Crashable__boo", "WindowsSemantics__boo", "Usage__rct", "Mounts__map"}
+var decodeMsgFieldOrder8zgensym_965f3afadc761adf_9 = []string{"Root_zid00_ptr", "", "Crashable_zid02_boo", "WindowsSemantics_zid03_boo", "Usage_zid04_rct", "Mounts_zid05_map"}
 
 var decodeMsgFieldSkip8zgensym_965f3afadc761adf_9 = []bool{false, true, false, false, false, false}
 
 // fields of DiskUsage
-var decodeMsgFieldOrder10zgensym_965f3afadc761adf_11 = []string{"AvailBytes__u64", "TotalBytes__u64", "UsedBytes__u64"}
+var decodeMsgFieldOrder10zgensym_965f3afadc761adf_11 = []string{"AvailBytes_zid00_u64", "TotalBytes_zid01_u64", "UsedBytes_zid02_u64"}
 
 var decodeMsgFieldSkip10zgensym_965f3afadc761adf_11 = []bool{false, false, false}
 
@@ -666,8 +666,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_13[0] {
-		// write "Root__ptr"
-		err = en.Append(0xa9, 0x52, 0x6f, 0x6f, 0x74, 0x5f, 0x5f, 0x70, 0x74, 0x72)
+		// write "Root_zid00_ptr"
+		err = en.Append(0xae, 0x52, 0x6f, 0x6f, 0x74, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x70, 0x74, 0x72)
 		if err != nil {
 			return err
 		}
@@ -687,8 +687,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_13[2] {
-		// write "Crashable__boo"
-		err = en.Append(0xae, 0x43, 0x72, 0x61, 0x73, 0x68, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// write "Crashable_zid02_boo"
+		err = en.Append(0xb3, 0x43, 0x72, 0x61, 0x73, 0x68, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x62, 0x6f, 0x6f)
 		if err != nil {
 			return err
 		}
@@ -699,8 +699,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_13[3] {
-		// write "WindowsSemantics__boo"
-		err = en.Append(0xb5, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x53, 0x65, 0x6d, 0x61, 0x6e, 0x74, 0x69, 0x63, 0x73, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// write "WindowsSemantics_zid03_boo"
+		err = en.Append(0xba, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x53, 0x65, 0x6d, 0x61, 0x6e, 0x74, 0x69, 0x63, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x33, 0x5f, 0x62, 0x6f, 0x6f)
 		if err != nil {
 			return err
 		}
@@ -711,8 +711,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_13[4] {
-		// write "Usage__rct"
-		err = en.Append(0xaa, 0x55, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x5f, 0x72, 0x63, 0x74)
+		// write "Usage_zid04_rct"
+		err = en.Append(0xaf, 0x55, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x34, 0x5f, 0x72, 0x63, 0x74)
 		if err != nil {
 			return err
 		}
@@ -738,8 +738,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 		}
 
 		if !empty_zgensym_965f3afadc761adf_15[0] {
-			// write "AvailBytes__u64"
-			err = en.Append(0xaf, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// write "AvailBytes_zid00_u64"
+			err = en.Append(0xb4, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x75, 0x36, 0x34)
 			if err != nil {
 				return err
 			}
@@ -750,8 +750,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 		}
 
 		if !empty_zgensym_965f3afadc761adf_15[1] {
-			// write "TotalBytes__u64"
-			err = en.Append(0xaf, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// write "TotalBytes_zid01_u64"
+			err = en.Append(0xb4, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x75, 0x36, 0x34)
 			if err != nil {
 				return err
 			}
@@ -762,8 +762,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 		}
 
 		if !empty_zgensym_965f3afadc761adf_15[2] {
-			// write "UsedBytes__u64"
-			err = en.Append(0xae, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// write "UsedBytes_zid02_u64"
+			err = en.Append(0xb3, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x75, 0x36, 0x34)
 			if err != nil {
 				return err
 			}
@@ -776,8 +776,8 @@ func (z *SerzMemFS) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_13[5] {
-		// write "Mounts__map"
-		err = en.Append(0xab, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// write "Mounts_zid05_map"
+		err = en.Append(0xb0, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x35, 0x5f, 0x6d, 0x61, 0x70)
 		if err != nil {
 			return err
 		}
@@ -814,8 +814,8 @@ func (z *SerzMemFS) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendMapHeader(o, fieldsInUse)
 
 	if !empty[0] {
-		// string "Root__ptr"
-		o = append(o, 0xa9, 0x52, 0x6f, 0x6f, 0x74, 0x5f, 0x5f, 0x70, 0x74, 0x72)
+		// string "Root_zid00_ptr"
+		o = append(o, 0xae, 0x52, 0x6f, 0x6f, 0x74, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x70, 0x74, 0x72)
 		// marshalGen.gPtr()
 
 		if z.Root == nil {
@@ -831,20 +831,20 @@ func (z *SerzMemFS) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 
 	if !empty[2] {
-		// string "Crashable__boo"
-		o = append(o, 0xae, 0x43, 0x72, 0x61, 0x73, 0x68, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// string "Crashable_zid02_boo"
+		o = append(o, 0xb3, 0x43, 0x72, 0x61, 0x73, 0x68, 0x61, 0x62, 0x6c, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x62, 0x6f, 0x6f)
 		o = msgp.AppendBool(o, z.Crashable)
 	}
 
 	if !empty[3] {
-		// string "WindowsSemantics__boo"
-		o = append(o, 0xb5, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x53, 0x65, 0x6d, 0x61, 0x6e, 0x74, 0x69, 0x63, 0x73, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// string "WindowsSemantics_zid03_boo"
+		o = append(o, 0xba, 0x57, 0x69, 0x6e, 0x64, 0x6f, 0x77, 0x73, 0x53, 0x65, 0x6d, 0x61, 0x6e, 0x74, 0x69, 0x63, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x33, 0x5f, 0x62, 0x6f, 0x6f)
 		o = msgp.AppendBool(o, z.WindowsSemantics)
 	}
 
 	if !empty[4] {
-		// string "Usage__rct"
-		o = append(o, 0xaa, 0x55, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x5f, 0x72, 0x63, 0x74)
+		// string "Usage_zid04_rct"
+		o = append(o, 0xaf, 0x55, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x34, 0x5f, 0x72, 0x63, 0x74)
 
 		// honor the omitempty tags
 		var empty [3]bool
@@ -852,28 +852,28 @@ func (z *SerzMemFS) MarshalMsg(b []byte) (o []byte, err error) {
 		o = msgp.AppendMapHeader(o, fieldsInUse)
 
 		if !empty[0] {
-			// string "AvailBytes__u64"
-			o = append(o, 0xaf, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// string "AvailBytes_zid00_u64"
+			o = append(o, 0xb4, 0x41, 0x76, 0x61, 0x69, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x75, 0x36, 0x34)
 			o = msgp.AppendUint64(o, z.Usage.AvailBytes)
 		}
 
 		if !empty[1] {
-			// string "TotalBytes__u64"
-			o = append(o, 0xaf, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// string "TotalBytes_zid01_u64"
+			o = append(o, 0xb4, 0x54, 0x6f, 0x74, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x75, 0x36, 0x34)
 			o = msgp.AppendUint64(o, z.Usage.TotalBytes)
 		}
 
 		if !empty[2] {
-			// string "UsedBytes__u64"
-			o = append(o, 0xae, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x5f, 0x75, 0x36, 0x34)
+			// string "UsedBytes_zid02_u64"
+			o = append(o, 0xb3, 0x55, 0x73, 0x65, 0x64, 0x42, 0x79, 0x74, 0x65, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x75, 0x36, 0x34)
 			o = msgp.AppendUint64(o, z.Usage.UsedBytes)
 		}
 
 	}
 
 	if !empty[5] {
-		// string "Mounts__map"
-		o = append(o, 0xab, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// string "Mounts_zid05_map"
+		o = append(o, 0xb0, 0x4d, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x35, 0x5f, 0x6d, 0x61, 0x70)
 		o = msgp.AppendMapHeader(o, uint32(len(z.Mounts)))
 		for zgensym_965f3afadc761adf_6, zgensym_965f3afadc761adf_7 := range z.Mounts {
 			o = msgp.AppendString(o, zgensym_965f3afadc761adf_6)
@@ -949,7 +949,7 @@ doneWithStruct17zgensym_965f3afadc761adf_18:
 		switch curField17zgensym_965f3afadc761adf_18 {
 		// -- templateUnmarshalMsg ends here --
 
-		case "Root__ptr":
+		case "Root_zid00_ptr":
 			found17zgensym_965f3afadc761adf_18[0] = true
 			// unmarshalGen.gPtr(): we have a BaseElem.
 
@@ -979,21 +979,21 @@ doneWithStruct17zgensym_965f3afadc761adf_18:
 					}
 				}
 			}
-		case "Crashable__boo":
+		case "Crashable_zid02_boo":
 			found17zgensym_965f3afadc761adf_18[2] = true
 			z.Crashable, bts, err = nbs.ReadBoolBytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "WindowsSemantics__boo":
+		case "WindowsSemantics_zid03_boo":
 			found17zgensym_965f3afadc761adf_18[3] = true
 			z.WindowsSemantics, bts, err = nbs.ReadBoolBytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "Usage__rct":
+		case "Usage_zid04_rct":
 			found17zgensym_965f3afadc761adf_18[4] = true
 			const maxFields19zgensym_965f3afadc761adf_20 = 3
 
@@ -1045,21 +1045,21 @@ doneWithStruct17zgensym_965f3afadc761adf_18:
 				switch curField19zgensym_965f3afadc761adf_20 {
 				// -- templateUnmarshalMsg ends here --
 
-				case "AvailBytes__u64":
+				case "AvailBytes_zid00_u64":
 					found19zgensym_965f3afadc761adf_20[0] = true
 					z.Usage.AvailBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
 					if err != nil {
 						return
 					}
-				case "TotalBytes__u64":
+				case "TotalBytes_zid01_u64":
 					found19zgensym_965f3afadc761adf_20[1] = true
 					z.Usage.TotalBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
 					if err != nil {
 						return
 					}
-				case "UsedBytes__u64":
+				case "UsedBytes_zid02_u64":
 					found19zgensym_965f3afadc761adf_20[2] = true
 					z.Usage.UsedBytes, bts, err = nbs.ReadUint64Bytes(bts)
 
@@ -1077,7 +1077,7 @@ doneWithStruct17zgensym_965f3afadc761adf_18:
 				bts = nbs.PopAlwaysNil()
 			}
 
-		case "Mounts__map":
+		case "Mounts_zid05_map":
 			found17zgensym_965f3afadc761adf_18[5] = true
 			if nbs.AlwaysNil {
 				if len(z.Mounts) > 0 {
@@ -1139,24 +1139,24 @@ doneWithStruct17zgensym_965f3afadc761adf_18:
 }
 
 // fields of SerzMemFS
-var unmarshalMsgFieldOrder17zgensym_965f3afadc761adf_18 = []string{"Root__ptr", "", "Crashable__boo", "WindowsSemantics__boo", "Usage__rct", "Mounts__map"}
+var unmarshalMsgFieldOrder17zgensym_965f3afadc761adf_18 = []string{"Root_zid00_ptr", "", "Crashable_zid02_boo", "WindowsSemantics_zid03_boo", "Usage_zid04_rct", "Mounts_zid05_map"}
 
 var unmarshalMsgFieldSkip17zgensym_965f3afadc761adf_18 = []bool{false, true, false, false, false, false}
 
 // fields of DiskUsage
-var unmarshalMsgFieldOrder19zgensym_965f3afadc761adf_20 = []string{"AvailBytes__u64", "TotalBytes__u64", "UsedBytes__u64"}
+var unmarshalMsgFieldOrder19zgensym_965f3afadc761adf_20 = []string{"AvailBytes_zid00_u64", "TotalBytes_zid01_u64", "UsedBytes_zid02_u64"}
 
 var unmarshalMsgFieldSkip19zgensym_965f3afadc761adf_20 = []bool{false, false, false}
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *SerzMemFS) Msgsize() (s int) {
-	s = 1 + 10
+	s = 1 + 15
 	if z.Root == nil {
 		s += msgp.NilSize
 	} else {
 		s += z.Root.Msgsize()
 	}
-	s += 15 + msgp.BoolSize + 22 + msgp.BoolSize + 11 + 1 + 16 + msgp.Uint64Size + 16 + msgp.Uint64Size + 15 + msgp.Uint64Size + 12 + msgp.MapHeaderSize
+	s += 20 + msgp.BoolSize + 27 + msgp.BoolSize + 16 + 1 + 21 + msgp.Uint64Size + 21 + msgp.Uint64Size + 20 + msgp.Uint64Size + 17 + msgp.MapHeaderSize
 	if z.Mounts != nil {
 		for zgensym_965f3afadc761adf_6, zgensym_965f3afadc761adf_7 := range z.Mounts {
 			_ = zgensym_965f3afadc761adf_7
@@ -1241,31 +1241,31 @@ doneWithStruct26zgensym_965f3afadc761adf_27:
 		switch curField26zgensym_965f3afadc761adf_27 {
 		// -- templateDecodeMsg ends here --
 
-		case "IsDir__boo":
+		case "IsDir_zid00_boo":
 			found26zgensym_965f3afadc761adf_27[0] = true
 			z.IsDir, err = dc.ReadBool()
 			if err != nil {
 				return
 			}
-		case "Data__bin":
+		case "Data_zid01_bin":
 			found26zgensym_965f3afadc761adf_27[1] = true
 			z.Data, err = dc.ReadBytes(z.Data)
 			if err != nil {
 				return
 			}
-		case "SyncedData__bin":
+		case "SyncedData_zid02_bin":
 			found26zgensym_965f3afadc761adf_27[2] = true
 			z.SyncedData, err = dc.ReadBytes(z.SyncedData)
 			if err != nil {
 				return
 			}
-		case "ModTime__tim":
+		case "ModTime_zid03_tim":
 			found26zgensym_965f3afadc761adf_27[3] = true
 			z.ModTime, err = dc.ReadTime()
 			if err != nil {
 				return
 			}
-		case "Children__map":
+		case "Children_zid04_map":
 			found26zgensym_965f3afadc761adf_27[4] = true
 			var zgensym_965f3afadc761adf_28 uint32
 			zgensym_965f3afadc761adf_28, err = dc.ReadMapHeader()
@@ -1315,7 +1315,7 @@ doneWithStruct26zgensym_965f3afadc761adf_27:
 				}
 				z.Children[zgensym_965f3afadc761adf_22] = zgensym_965f3afadc761adf_23
 			}
-		case "SyncedChildren__map":
+		case "SyncedChildren_zid05_map":
 			found26zgensym_965f3afadc761adf_27[5] = true
 			var zgensym_965f3afadc761adf_29 uint32
 			zgensym_965f3afadc761adf_29, err = dc.ReadMapHeader()
@@ -1388,7 +1388,7 @@ doneWithStruct26zgensym_965f3afadc761adf_27:
 }
 
 // fields of SerzMemNode
-var decodeMsgFieldOrder26zgensym_965f3afadc761adf_27 = []string{"IsDir__boo", "Data__bin", "SyncedData__bin", "ModTime__tim", "Children__map", "SyncedChildren__map"}
+var decodeMsgFieldOrder26zgensym_965f3afadc761adf_27 = []string{"IsDir_zid00_boo", "Data_zid01_bin", "SyncedData_zid02_bin", "ModTime_zid03_tim", "Children_zid04_map", "SyncedChildren_zid05_map"}
 
 var decodeMsgFieldSkip26zgensym_965f3afadc761adf_27 = []bool{false, false, false, false, false, false}
 
@@ -1453,8 +1453,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[0] {
-		// write "IsDir__boo"
-		err = en.Append(0xaa, 0x49, 0x73, 0x44, 0x69, 0x72, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// write "IsDir_zid00_boo"
+		err = en.Append(0xaf, 0x49, 0x73, 0x44, 0x69, 0x72, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x62, 0x6f, 0x6f)
 		if err != nil {
 			return err
 		}
@@ -1465,8 +1465,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[1] {
-		// write "Data__bin"
-		err = en.Append(0xa9, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x5f, 0x62, 0x69, 0x6e)
+		// write "Data_zid01_bin"
+		err = en.Append(0xae, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x62, 0x69, 0x6e)
 		if err != nil {
 			return err
 		}
@@ -1477,8 +1477,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[2] {
-		// write "SyncedData__bin"
-		err = en.Append(0xaf, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x5f, 0x62, 0x69, 0x6e)
+		// write "SyncedData_zid02_bin"
+		err = en.Append(0xb4, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x62, 0x69, 0x6e)
 		if err != nil {
 			return err
 		}
@@ -1489,8 +1489,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[3] {
-		// write "ModTime__tim"
-		err = en.Append(0xac, 0x4d, 0x6f, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x5f, 0x5f, 0x74, 0x69, 0x6d)
+		// write "ModTime_zid03_tim"
+		err = en.Append(0xb1, 0x4d, 0x6f, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x33, 0x5f, 0x74, 0x69, 0x6d)
 		if err != nil {
 			return err
 		}
@@ -1501,8 +1501,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[4] {
-		// write "Children__map"
-		err = en.Append(0xad, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// write "Children_zid04_map"
+		err = en.Append(0xb2, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x34, 0x5f, 0x6d, 0x61, 0x70)
 		if err != nil {
 			return err
 		}
@@ -1532,8 +1532,8 @@ func (z *SerzMemNode) EncodeMsg(en *msgp.Writer) (err error) {
 	}
 
 	if !empty_zgensym_965f3afadc761adf_30[5] {
-		// write "SyncedChildren__map"
-		err = en.Append(0xb3, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// write "SyncedChildren_zid05_map"
+		err = en.Append(0xb8, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x35, 0x5f, 0x6d, 0x61, 0x70)
 		if err != nil {
 			return err
 		}
@@ -1579,32 +1579,32 @@ func (z *SerzMemNode) MarshalMsg(b []byte) (o []byte, err error) {
 	o = msgp.AppendMapHeader(o, fieldsInUse)
 
 	if !empty[0] {
-		// string "IsDir__boo"
-		o = append(o, 0xaa, 0x49, 0x73, 0x44, 0x69, 0x72, 0x5f, 0x5f, 0x62, 0x6f, 0x6f)
+		// string "IsDir_zid00_boo"
+		o = append(o, 0xaf, 0x49, 0x73, 0x44, 0x69, 0x72, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x30, 0x5f, 0x62, 0x6f, 0x6f)
 		o = msgp.AppendBool(o, z.IsDir)
 	}
 
 	if !empty[1] {
-		// string "Data__bin"
-		o = append(o, 0xa9, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x5f, 0x62, 0x69, 0x6e)
+		// string "Data_zid01_bin"
+		o = append(o, 0xae, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x31, 0x5f, 0x62, 0x69, 0x6e)
 		o = msgp.AppendBytes(o, z.Data)
 	}
 
 	if !empty[2] {
-		// string "SyncedData__bin"
-		o = append(o, 0xaf, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x5f, 0x62, 0x69, 0x6e)
+		// string "SyncedData_zid02_bin"
+		o = append(o, 0xb4, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x44, 0x61, 0x74, 0x61, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x32, 0x5f, 0x62, 0x69, 0x6e)
 		o = msgp.AppendBytes(o, z.SyncedData)
 	}
 
 	if !empty[3] {
-		// string "ModTime__tim"
-		o = append(o, 0xac, 0x4d, 0x6f, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x5f, 0x5f, 0x74, 0x69, 0x6d)
+		// string "ModTime_zid03_tim"
+		o = append(o, 0xb1, 0x4d, 0x6f, 0x64, 0x54, 0x69, 0x6d, 0x65, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x33, 0x5f, 0x74, 0x69, 0x6d)
 		o = msgp.AppendTime(o, z.ModTime)
 	}
 
 	if !empty[4] {
-		// string "Children__map"
-		o = append(o, 0xad, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// string "Children_zid04_map"
+		o = append(o, 0xb2, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x34, 0x5f, 0x6d, 0x61, 0x70)
 		o = msgp.AppendMapHeader(o, uint32(len(z.Children)))
 		for zgensym_965f3afadc761adf_22, zgensym_965f3afadc761adf_23 := range z.Children {
 			o = msgp.AppendString(o, zgensym_965f3afadc761adf_22)
@@ -1624,8 +1624,8 @@ func (z *SerzMemNode) MarshalMsg(b []byte) (o []byte, err error) {
 	}
 
 	if !empty[5] {
-		// string "SyncedChildren__map"
-		o = append(o, 0xb3, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x5f, 0x6d, 0x61, 0x70)
+		// string "SyncedChildren_zid05_map"
+		o = append(o, 0xb8, 0x53, 0x79, 0x6e, 0x63, 0x65, 0x64, 0x43, 0x68, 0x69, 0x6c, 0x64, 0x72, 0x65, 0x6e, 0x5f, 0x7a, 0x69, 0x64, 0x30, 0x35, 0x5f, 0x6d, 0x61, 0x70)
 		o = msgp.AppendMapHeader(o, uint32(len(z.SyncedChildren)))
 		for zgensym_965f3afadc761adf_24, zgensym_965f3afadc761adf_25 := range z.SyncedChildren {
 			o = msgp.AppendString(o, zgensym_965f3afadc761adf_24)
@@ -1712,14 +1712,14 @@ doneWithStruct32zgensym_965f3afadc761adf_33:
 		switch curField32zgensym_965f3afadc761adf_33 {
 		// -- templateUnmarshalMsg ends here --
 
-		case "IsDir__boo":
+		case "IsDir_zid00_boo":
 			found32zgensym_965f3afadc761adf_33[0] = true
 			z.IsDir, bts, err = nbs.ReadBoolBytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "Data__bin":
+		case "Data_zid01_bin":
 			found32zgensym_965f3afadc761adf_33[1] = true
 			if nbs.AlwaysNil || msgp.IsNil(bts) {
 				if !nbs.AlwaysNil {
@@ -1736,7 +1736,7 @@ doneWithStruct32zgensym_965f3afadc761adf_33:
 			if err != nil {
 				return
 			}
-		case "SyncedData__bin":
+		case "SyncedData_zid02_bin":
 			found32zgensym_965f3afadc761adf_33[2] = true
 			if nbs.AlwaysNil || msgp.IsNil(bts) {
 				if !nbs.AlwaysNil {
@@ -1753,14 +1753,14 @@ doneWithStruct32zgensym_965f3afadc761adf_33:
 			if err != nil {
 				return
 			}
-		case "ModTime__tim":
+		case "ModTime_zid03_tim":
 			found32zgensym_965f3afadc761adf_33[3] = true
 			z.ModTime, bts, err = nbs.ReadTimeBytes(bts)
 
 			if err != nil {
 				return
 			}
-		case "Children__map":
+		case "Children_zid04_map":
 			found32zgensym_965f3afadc761adf_33[4] = true
 			if nbs.AlwaysNil {
 				if len(z.Children) > 0 {
@@ -1822,7 +1822,7 @@ doneWithStruct32zgensym_965f3afadc761adf_33:
 					z.Children[zgensym_965f3afadc761adf_22] = zgensym_965f3afadc761adf_23
 				}
 			}
-		case "SyncedChildren__map":
+		case "SyncedChildren_zid05_map":
 			found32zgensym_965f3afadc761adf_33[5] = true
 			if nbs.AlwaysNil {
 				if len(z.SyncedChildren) > 0 {
@@ -1907,13 +1907,13 @@ doneWithStruct32zgensym_965f3afadc761adf_33:
 }
 
 // fields of SerzMemNode
-var unmarshalMsgFieldOrder32zgensym_965f3afadc761adf_33 = []string{"IsDir__boo", "Data__bin", "SyncedData__bin", "ModTime__tim", "Children__map", "SyncedChildren__map"}
+var unmarshalMsgFieldOrder32zgensym_965f3afadc761adf_33 = []string{"IsDir_zid00_boo", "Data_zid01_bin", "SyncedData_zid02_bin", "ModTime_zid03_tim", "Children_zid04_map", "SyncedChildren_zid05_map"}
 
 var unmarshalMsgFieldSkip32zgensym_965f3afadc761adf_33 = []bool{false, false, false, false, false, false}
 
 // Msgsize returns an upper bound estimate of the number of bytes occupied by the serialized message
 func (z *SerzMemNode) Msgsize() (s int) {
-	s = 1 + 11 + msgp.BoolSize + 10 + msgp.BytesPrefixSize + len(z.Data) + 16 + msgp.BytesPrefixSize + len(z.SyncedData) + 13 + msgp.TimeSize + 14 + msgp.MapHeaderSize
+	s = 1 + 16 + msgp.BoolSize + 15 + msgp.BytesPrefixSize + len(z.Data) + 21 + msgp.BytesPrefixSize + len(z.SyncedData) + 18 + msgp.TimeSize + 19 + msgp.MapHeaderSize
 	if z.Children != nil {
 		for zgensym_965f3afadc761adf_22, zgensym_965f3afadc761adf_23 := range z.Children {
 			_ = zgensym_965f3afadc761adf_23
@@ -1926,7 +1926,7 @@ func (z *SerzMemNode) Msgsize() (s int) {
 			}
 		}
 	}
-	s += 20 + msgp.MapHeaderSize
+	s += 25 + msgp.MapHeaderSize
 	if z.SyncedChildren != nil {
 		for zgensym_965f3afadc761adf_24, zgensym_965f3afadc761adf_25 := range z.SyncedChildren {
 			_ = zgensym_965f3afadc761adf_25
