@@ -17,7 +17,7 @@ top level is BSD 3-clause licensed)
 ## Extensions beyond pebble/vfs
 
 This fork adds several methods to support dual-mode
-testing (real FS via `go test` and in-memory FS via `go test -tags memfs`).
+testing (real FS and in-memory FS; via dev created build tags).
 
 ### File interface additions
 
@@ -45,7 +45,7 @@ testing (real FS via `go test` and in-memory FS via `go test -tags memfs`).
 
 - `MountReadOnlyRealDir(fromRealDir, mountPointInsideDir string) error` --
   Mount a real OS directory inside a `MemFS` at a chosen path, read-only.
-  This allows tests running under `-tags memfs` to access large test
+  This allows tests running under a MemFS to access large test
   assets (e.g. reference databases, golden files) from the real filesystem
   without copying them into memory. Key properties:
 
