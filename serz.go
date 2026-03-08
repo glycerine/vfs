@@ -5,8 +5,14 @@
 package vfs
 
 import (
+	"os"
 	"time"
+
+	"github.com/glycerine/greenpack/msgp"
+	"github.com/klauspost/compress/s2"
 )
+
+var _ = s2.NewWriter
 
 //go:generate greenpack
 
@@ -69,11 +75,12 @@ func (y *MemFS) Save(path string) error {
 	o.Root = y.root.ToSerz()
 	o.LockedFiles = make(map[string]bool)
 	y.lockedFiles.Range(func(key, value any) bool {
-		o.LockedFiles[key] = true
+		o.LockedFiles[key.(string)] = true
+		return true // true => don't stop the iteration early.
 	})
-	o.Crashable = m.crashable
-	o.WindowsSemanics = m.windowsSemantics
-	o.Usage = m.usage
+	o.Crashable = y.crashable
+	o.WindowsSemantics = y.windowsSemantics
+	o.Usage = y.usage
 	o.Mounts = make(map[string]string)
 	for k, v := range y.mounts {
 		o.Mounts[k] = v
@@ -89,9 +96,9 @@ func (y *MemFS) Save(path string) error {
 func (y *memNode) ToSerz() (o *SerzMemNode) {
 	o = &SerzMemNode{
 		IsDir:      y.isDir,
-		Data:       append([]byte{}, y.data...),
-		SyncedData: append([]byte{}, y.syncedData...),
-		ModTime:    y.modTime,
+		Data:       append([]byte{}, y.mu.data...),
+		SyncedData: append([]byte{}, y.mu.syncedData...),
+		ModTime:    y.mu.modTime,
 	}
 	if len(y.children) > 0 {
 		o.Children = make(map[string]*SerzMemNode)
@@ -122,7 +129,7 @@ func (m *MemFS) Load(path string) error {
 	s := &SerzMemFS{}
 
 	// fill s
-	err := msgp.Decode(r, s)
+	err = msgp.Decode(r, s)
 	panicOn(err)
 
 	// transfer from s to m
@@ -137,4 +144,23 @@ func (m *MemFS) Load(path string) error {
 		m.mounts[k] = v
 	}
 	return nil
+}
+
+func (s *SerzMemNode) FromSerz() (m *memNode) {
+	m = &memNode{
+		isDir:          s.IsDir,
+		children:       make(map[string]*memNode),
+		syncedChildren: make(map[string]*memNode),
+	}
+	m.mu.data = s.Data
+	m.mu.syncedData = s.SyncedData
+	m.mu.modTime = s.ModTime
+
+	for k, v := range s.Children {
+		m.children[k] = v.FromSerz()
+	}
+	for k, v := range s.SyncedChildren {
+		m.syncedChildren[k] = v.FromSerz()
+	}
+	return m
 }
