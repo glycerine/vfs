@@ -2,12 +2,13 @@ package vfs
 
 import (
 	iofs "io/fs"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestSerz(t *testing.T) {
+func TestSerz101(t *testing.T) {
 	// same as TestMemFSWalkDir, but interrupt with
 	// serialize and deserialize in the middle.
 
@@ -25,9 +26,18 @@ func TestSerz(t *testing.T) {
 		require.NoError(t, f.Close())
 	}
 
+	// serz
+	path := "basic_memfs_serz101.dat"
+	panicOn(fs.Save(path))
+	defer os.Remove(path) // cldeanup after test.
+
+	// deserz into fs2
+	fs2 := &MemFS{}
+	panicOn(fs2.Load(path))
+
 	// Test 1: Full walk from root, collect all paths
 	var paths []string
-	err := fs.WalkDir("/", func(path string, d iofs.DirEntry, err error) error {
+	err := fs2.WalkDir("/", func(path string, d iofs.DirEntry, err error) error {
 		require.NoError(t, err)
 		paths = append(paths, path)
 		return nil
@@ -48,4 +58,5 @@ func TestSerz(t *testing.T) {
 		"/x/f4",
 	}
 	require.Equal(t, expected, paths)
+	//vv("good: done with Serz101")
 }
