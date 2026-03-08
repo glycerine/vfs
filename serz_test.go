@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _ = os.Remove
+
 func TestSerz101(t *testing.T) {
 	// same as TestMemFSWalkDir, but interrupt with
 	// serialize and deserialize in the middle.

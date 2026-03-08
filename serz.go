@@ -52,6 +52,12 @@ type SerzMemNode struct {
 	SyncedChildren map[string]*SerzMemNode `zid:"5"`
 }
 
+// Save saves the MemFS y to disk under path.
+// The recommend naming convention for path is to
+// end in .green.s2, since the data is greenpack
+// encoded and then s2 compressed. We
+// leave that up to the caller's discretion, and
+// write to whatever path we are given.
 func (y *MemFS) Save(path string) error {
 	fd, err := os.Create(path)
 	if err != nil {
@@ -70,7 +76,7 @@ func (y *MemFS) Save(path string) error {
 	// we should have exclusive access now.
 	o := &SerzMemFS{}
 
-	o.Root = y.root.ToSerz()
+	o.Root = y.root.toSerz()
 	o.LockedFiles = make(map[string]bool)
 	y.lockedFiles.Range(func(key, value any) bool {
 		o.LockedFiles[key.(string)] = true
@@ -94,7 +100,7 @@ func (y *MemFS) Save(path string) error {
 	return nil
 }
 
-func (y *memNode) ToSerz() (o *SerzMemNode) {
+func (y *memNode) toSerz() (o *SerzMemNode) {
 	o = &SerzMemNode{
 		IsDir:      y.isDir,
 		Data:       append([]byte{}, y.mu.data...),
@@ -104,18 +110,23 @@ func (y *memNode) ToSerz() (o *SerzMemNode) {
 	if len(y.children) > 0 {
 		o.Children = make(map[string]*SerzMemNode)
 		for k, v := range y.children {
-			o.Children[k] = v.ToSerz()
+			o.Children[k] = v.toSerz()
 		}
 	}
 	if len(y.syncedChildren) > 0 {
 		o.SyncedChildren = make(map[string]*SerzMemNode)
 		for k, v := range y.syncedChildren {
-			o.SyncedChildren[k] = v.ToSerz()
+			o.SyncedChildren[k] = v.toSerz()
 		}
 	}
 	return
 }
 
+// Load is the inverse of Save. It restores
+// s2 compressed, greenpack encoded data from
+// disk into m. Anything in m to start with
+// is immediately wiped to zero, and then
+// the restore from path proceeds.
 func (m *MemFS) Load(path string) error {
 
 	// clear output m
@@ -137,7 +148,7 @@ func (m *MemFS) Load(path string) error {
 	}
 
 	// transfer from s to m
-	m.root = s.Root.FromSerz()
+	m.root = s.Root.fromSerz()
 	for k := range s.LockedFiles {
 		m.lockedFiles.Store(k, nil)
 	}
@@ -150,7 +161,7 @@ func (m *MemFS) Load(path string) error {
 	return nil
 }
 
-func (s *SerzMemNode) FromSerz() (m *memNode) {
+func (s *SerzMemNode) fromSerz() (m *memNode) {
 	m = &memNode{
 		isDir:          s.IsDir,
 		children:       make(map[string]*memNode),
@@ -161,10 +172,10 @@ func (s *SerzMemNode) FromSerz() (m *memNode) {
 	m.mu.modTime = s.ModTime
 
 	for k, v := range s.Children {
-		m.children[k] = v.FromSerz()
+		m.children[k] = v.fromSerz()
 	}
 	for k, v := range s.SyncedChildren {
-		m.syncedChildren[k] = v.FromSerz()
+		m.syncedChildren[k] = v.fromSerz()
 	}
 	return m
 }
