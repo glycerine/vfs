@@ -1,4 +1,4 @@
-# vfs - fork of pebble/vfs
+# vfs - extensions to pebble/vfs
 
 This is a fork and extension of the vfs mock file system
 test affordance from Pebble by Cockroach Labs.
@@ -13,3 +13,60 @@ LICENSE: see the LICENSE files herein.
 
 (parts are MIT licensed, parts are Apache 2 licensed, and the
 top level is BSD 3-clause licensed)
+
+## Extensions beyond pebble/vfs
+
+This fork adds several methods to support dual-mode
+testing (real FS via `go test` and in-memory FS via `go test -tags memfs`).
+
+### File interface additions
+
+- `Truncate(size int64) error` -- Truncate a file to a given size.
+  Required for testing write-ahead-log recovery, where a WAL
+  must be truncated to a specific size after a simulated crash.
+
+- `Name() string` -- Return the name/path of an open file handle.
+
+### FS interface additions
+
+- `ReadDir(dirname string) ([]os.DirEntry, error)` -- Read a directory
+  and return sorted `os.DirEntry` entries. Complements the existing
+  `List()` (which returns only name strings) by providing type and
+  metadata information for each entry.
+
+- `WalkDir(path string, fn fs.WalkDirFunc) error` -- Recursive directory
+  traversal following the `io/fs.WalkDirFunc` convention. Walks the
+  tree in lexicographic order, supports `fs.SkipDir`. Implemented for
+  both `defaultFS` (real disk) and `MemFS` (in-memory tree).
+
+- `IsReal() bool` -- Returns true for the real OS filesystem
+  (`defaultFS or vfs.Default`), false for `MemFS`. Lets test setup code branch on
+  the filesystem type without type-asserting on unexported vfs types.
+
+- `MountReadOnlyRealDir(fromRealDir, mountPointInsideDir string) error` --
+  Mount a real OS directory inside a `MemFS` at a chosen path, read-only.
+  This allows tests running under `-tags memfs` to access large test
+  assets (e.g. reference databases, golden files) from the real filesystem
+  without copying them into memory. Key properties:
+
+  - Read-only: `Open`, `Stat`, `List`, `ReadDir`, and `WalkDir` fall
+    through to the real directory. Write operations (`Create`, `MkdirAll`,
+    `Rename`, etc.) targeting the mount point return an error.
+  - Disjoint paths: The mount point must not already exist in the
+    MemFS overlay. This prevents ambiguous ownership of paths.
+  - Multiple mounts: Several real directories can be mounted at
+    different MemFS paths on the same `MemFS` instance.
+  - Zero overhead when unused: A plain `NewMem()` with no mounts
+    has no extra allocations or method-dispatch overhead.
+  - Propagated on `CrashClone()`: Mount configuration is carried
+    forward so crash-recovery tests retain access to mounted assets.
+
+  Only supported on `MemFS`; calling on `defaultFS` or wrapper
+  filesystems returns an error.
+
+--------------
+Author: Jason E. Aten, Ph.D.
+
+Copyright (C) 2026, Jason E. Aten, Ph.D. All rights reserved.
+
+LICENSE: BSD 3-clause for the new aggregate; same as pebble. See the LICENSE files herein.
