@@ -14,8 +14,10 @@ import (
 type DiskUsage struct {
 	// Total disk space available to the current process in bytes.
 	AvailBytes uint64 `zid:"0"`
+
 	// Total disk space in bytes.
 	TotalBytes uint64 `zid:"1"`
+
 	// Used disk space in bytes.
 	UsedBytes uint64 `zid:"2"`
 }
@@ -24,7 +26,7 @@ type DiskUsage struct {
 type SerzMemFS struct {
 	Root *SerzMemNode `zid:"0"`
 
-	LockedFiles map[string]struct{} `zid:"1"`
+	LockedFiles map[string]bool `zid:"1"`
 
 	Crashable bool `zid:"2"`
 
@@ -44,4 +46,95 @@ type SerzMemNode struct {
 
 	Children       map[string]*SerzMemNode `zid:"4"`
 	SyncedChildren map[string]*SerzMemNode `zid:"5"`
+}
+
+func (y *MemFS) Save(path string) error {
+	fd, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	defer fd.Sync()
+
+	// same locking order as Create: first y.cloneMu, then y.mu during walk.
+	y.cloneMu.Lock()
+	defer y.cloneMu.Unlock()
+
+	y.mu.Lock()
+	defer y.mu.Unlock()
+
+	// we should have exclusive access now.
+	o := &SerzMemFS{}
+
+	o.Root = y.root.ToSerz()
+	o.LockedFiles = make(map[string]bool)
+	y.lockedFiles.Range(func(key, value any) bool {
+		o.LockedFiles[key] = true
+	})
+	o.Crashable = m.crashable
+	o.WindowsSemanics = m.windowsSemantics
+	o.Usage = m.usage
+	o.Mounts = make(map[string]string)
+	for k, v := range y.mounts {
+		o.Mounts[k] = v
+	}
+
+	w := msgp.NewWriter(fd)
+	o.EncodeMsg(w)
+	w.Flush()
+
+	return nil
+}
+
+func (y *memNode) ToSerz() (o *SerzMemNode) {
+	o = &SerzMemNode{
+		IsDir:      y.isDir,
+		Data:       append([]byte{}, y.data...),
+		SyncedData: append([]byte{}, y.syncedData...),
+		ModTime:    y.modTime,
+	}
+	if len(y.children) > 0 {
+		o.Children = make(map[string]*SerzMemNode)
+		for k, v := range y.children {
+			o.Children[k] = v.ToSerz()
+		}
+	}
+	if len(y.syncedChildren) > 0 {
+		o.SyncedChildren = make(map[string]*SerzMemNode)
+		for k, v := range y.syncedChildren {
+			o.SyncedChildren[k] = v.ToSerz()
+		}
+	}
+	return
+}
+
+func (m *MemFS) Load(path string) error {
+
+	// clear output m
+	*m = MemFS{}
+
+	fd, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+	r := msgp.NewReader(fd)
+	s := &SerzMemFS{}
+
+	// fill s
+	err := msgp.Decode(r, s)
+	panicOn(err)
+
+	// transfer from s to m
+	m.root = s.Root.FromSerz()
+	for k := range s.LockedFiles {
+		m.lockedFiles.Store(k, nil)
+	}
+	m.crashable = s.Crashable
+	m.windowsSemantics = s.WindowsSemantics
+	m.usage = s.Usage
+	for k, v := range s.Mounts {
+		m.mounts[k] = v
+	}
+	return nil
 }
