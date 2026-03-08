@@ -5,26 +5,7 @@
 package vfs
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	iofs "io/fs"
-	"maps"
-	"math/rand/v2"
-	"os"
-	"path"
-	"path/filepath"
-	"slices"
-	"sort"
-	"strings"
-	"sync"
-	"sync/atomic"
-	"syscall"
 	"time"
-
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/errors/oserror"
-	"github.com/glycerine/vfs/invariants"
 )
 
 //go:generate greenpack
