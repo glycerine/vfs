@@ -130,7 +130,9 @@ func (m *MemFS) Load(path string) error {
 
 	// fill s
 	err = msgp.Decode(r, s)
-	panicOn(err)
+	if err != nil {
+		return err
+	}
 
 	// transfer from s to m
 	m.root = s.Root.FromSerz()
