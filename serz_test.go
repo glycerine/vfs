@@ -27,7 +27,7 @@ func TestSerz101(t *testing.T) {
 	}
 
 	// serz
-	path := "basic_memfs_serz101.dat"
+	path := "basic_memfs_serz101.green.s2"
 	panicOn(fs.Save(path))
 	defer os.Remove(path) // cldeanup after test.
 

@@ -12,8 +12,6 @@ import (
 	"github.com/klauspost/compress/s2"
 )
 
-var _ = s2.NewWriter
-
 //go:generate greenpack
 
 // DiskUsage summarizes disk space usage on a filesystem.
@@ -86,14 +84,12 @@ func (y *MemFS) Save(path string) error {
 		o.Mounts[k] = v
 	}
 
-	w := msgp.NewWriter(fd)
-
-	//out := bytes.NewBuffer(make([]byte, 0, 1<<20))
-	//compressor := s2.NewWriter(out)
+	compressor := s2.NewWriter(fd)
+	w := msgp.NewWriter(compressor)
 
 	o.EncodeMsg(w)
 	w.Flush()
-	//compressor.Close()
+	compressor.Close()
 
 	return nil
 }
@@ -130,7 +126,8 @@ func (m *MemFS) Load(path string) error {
 		return err
 	}
 	defer fd.Close()
-	r := msgp.NewReader(fd)
+	decompressor := s2.NewReader(fd)
+	r := msgp.NewReader(decompressor)
 	s := &SerzMemFS{}
 
 	// fill s
