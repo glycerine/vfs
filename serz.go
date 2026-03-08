@@ -58,6 +58,10 @@ type SerzMemNode struct {
 // encoded and then s2 compressed. We
 // leave that up to the caller's discretion, and
 // write to whatever path we are given.
+//
+// Note that Save is writing from a "fake" file system
+// in memory (MemFS), to the real filesystem on disk
+// at path.
 func (y *MemFS) Save(path string) error {
 	fd, err := os.Create(path)
 	if err != nil {
@@ -124,9 +128,13 @@ func (y *memNode) toSerz() (o *SerzMemNode) {
 
 // Load is the inverse of Save. It restores
 // s2 compressed, greenpack encoded data from
-// disk into m. Anything in m to start with
+// real disk into m. Anything in m to start with
 // is immediately wiped to zero, and then
 // the restore from path proceeds.
+//
+// Note that Save is reading from the real filesystem
+// on real disk, and filling in a "fake" file system
+// in memory (MemFS).
 func (m *MemFS) Load(path string) error {
 
 	// clear output m
