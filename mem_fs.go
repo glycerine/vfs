@@ -6,6 +6,7 @@ package vfs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
@@ -22,7 +23,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cockroachdb/errors"
 	"github.com/cockroachdb/errors/oserror"
 	"github.com/glycerine/vfs/invariants"
 )

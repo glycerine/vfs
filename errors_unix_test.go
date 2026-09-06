@@ -9,12 +9,12 @@ package vfs
 import (
 	"testing"
 
-	"github.com/cockroachdb/errors"
+	"github.com/cockroachdb/errors/withstack"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sys/unix"
 )
 
 func TestIsNoSpaceError(t *testing.T) {
-	err := errors.WithStack(unix.ENOSPC)
+	err := withstack.WithStackDepth(unix.ENOSPC, 1)
 	require.True(t, IsNoSpaceError(err))
 }

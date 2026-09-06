@@ -11,7 +11,6 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/cockroachdb/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -26,7 +25,7 @@ func wrapOSFileImpl(f *os.File) File {
 func (defaultFS) OpenDir(name string) (File, error) {
 	f, err := os.OpenFile(name, syscall.O_CLOEXEC, 0)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	return &linuxDir{f}, nil
 }

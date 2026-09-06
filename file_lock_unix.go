@@ -7,11 +7,12 @@
 package vfs
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
 
-	"github.com/cockroachdb/errors"
 	"golang.org/x/sys/unix"
 )
 
@@ -32,7 +33,7 @@ func (l lockCloser) Close() error {
 	lockedFiles.mu.Lock()
 	defer lockedFiles.mu.Unlock()
 	if !lockedFiles.mu.files[l.name] {
-		panic(errors.Errorf("lock file %q is not locked", l.name))
+		panic(fmt.Errorf("lock file %q is not locked", l.name))
 	}
 	delete(lockedFiles.mu.files, l.name)
 

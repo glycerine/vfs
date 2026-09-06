@@ -5,6 +5,7 @@
 package vfs
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
@@ -12,7 +13,6 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/cockroachdb/errors"
 	"github.com/cockroachdb/errors/oserror"
 )
 
@@ -268,21 +268,21 @@ func (defaultFS) Create(name string, category DiskWriteCategory) (File, error) {
 	// attempting to create the a file at the same path.
 	for oserror.IsExist(err) {
 		if removeErr := os.Remove(name); removeErr != nil && !oserror.IsNotExist(removeErr) {
-			return wrapOSFile(osFile), errors.WithStack(removeErr)
+			return wrapOSFile(osFile), withStack(removeErr)
 		}
 		osFile, err = os.OpenFile(name, openFlags, 0666)
 	}
-	return wrapOSFile(osFile), errors.WithStack(err)
+	return wrapOSFile(osFile), withStack(err)
 }
 
 func (defaultFS) Link(oldname, newname string) error {
-	return errors.WithStack(os.Link(oldname, newname))
+	return withStack(os.Link(oldname, newname))
 }
 
 func (defaultFS) Open(name string, opts ...OpenOption) (File, error) {
 	osFile, err := os.OpenFile(name, os.O_RDONLY|syscall.O_CLOEXEC, 0)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	file := wrapOSFile(osFile)
 	for _, opt := range opts {
@@ -296,7 +296,7 @@ func (defaultFS) OpenReadWrite(
 ) (File, error) {
 	osFile, err := os.OpenFile(name, os.O_RDWR|syscall.O_CLOEXEC|os.O_CREATE, 0666)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	file := wrapOSFile(osFile)
 	for _, opt := range opts {
@@ -306,29 +306,29 @@ func (defaultFS) OpenReadWrite(
 }
 
 func (defaultFS) Remove(name string) error {
-	return errors.WithStack(os.Remove(name))
+	return withStack(os.Remove(name))
 }
 
 func (defaultFS) RemoveAll(name string) error {
-	return errors.WithStack(os.RemoveAll(name))
+	return withStack(os.RemoveAll(name))
 }
 
 func (defaultFS) Rename(oldname, newname string) error {
-	return errors.WithStack(os.Rename(oldname, newname))
+	return withStack(os.Rename(oldname, newname))
 }
 
 func (fs defaultFS) ReuseForWrite(
 	oldname, newname string, category DiskWriteCategory,
 ) (File, error) {
 	if err := fs.Rename(oldname, newname); err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	f, err := os.OpenFile(newname, os.O_RDWR|os.O_CREATE|syscall.O_CLOEXEC, 0666)
-	return wrapOSFile(f), errors.WithStack(err)
+	return wrapOSFile(f), withStack(err)
 }
 
 func (defaultFS) MkdirAll(dir string, perm os.FileMode) error {
-	return errors.WithStack(os.MkdirAll(dir, perm))
+	return withStack(os.MkdirAll(dir, perm))
 }
 
 func (defaultFS) IsReal() bool { return true }
@@ -349,13 +349,13 @@ func (defaultFS) List(dir string) ([]string, error) {
 	}
 	defer f.Close()
 	dirnames, err := f.Readdirnames(-1)
-	return dirnames, errors.WithStack(err)
+	return dirnames, withStack(err)
 }
 
 func (defaultFS) Stat(name string) (FileInfo, error) {
 	finfo, err := os.Stat(name)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	return defaultFileInfo{finfo}, nil
 }

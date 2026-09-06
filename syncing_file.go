@@ -7,8 +7,12 @@ package vfs
 import (
 	"sync/atomic"
 
-	"github.com/cockroachdb/errors"
+	"github.com/cockroachdb/errors/withstack"
 )
+
+func withStack(err error) error {
+	return withstack.WithStackDepth(err, 1)
+}
 
 // SyncingFileOptions holds the options for a syncingFile.
 type SyncingFileOptions struct {
@@ -62,7 +66,7 @@ func (f *syncingFile) Write(p []byte) (n int, err error) {
 
 	n, err = f.File.Write(p)
 	if err != nil {
-		return n, errors.WithStack(err)
+		return n, withStack(err)
 	}
 	// The offset is updated atomically so that it can be accessed safely from
 	// Sync.
@@ -139,7 +143,7 @@ func (f *syncingFile) maybeSync() error {
 	}
 
 	if f.fd == InvalidFd {
-		return errors.WithStack(f.Sync())
+		return withStack(f.Sync())
 	}
 
 	// Note that SyncTo will always be called with an offset < atomic.offset.
@@ -147,7 +151,7 @@ func (f *syncingFile) maybeSync() error {
 	// OSes which do not support syncing a portion of the file).
 	fullSync, err := f.SyncTo(syncToOffset)
 	if err != nil {
-		return errors.WithStack(err)
+		return withStack(err)
 	}
 	if fullSync {
 		f.ratchetSyncOffset(offset)
@@ -179,10 +183,10 @@ func (f *syncingFile) Close() error {
 			}
 			f.ratchetSyncOffset(off)
 		} else if err := f.Sync(); err != nil {
-			return errors.WithStack(err)
+			return withStack(err)
 		}
 	}
-	return errors.WithStack(f.File.Close())
+	return withStack(f.File.Close())
 }
 
 // NewSyncingFS wraps a vfs.FS with one that wraps newly created files with

@@ -5,6 +5,7 @@
 package vfs
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	iofs "io/fs"
@@ -18,7 +19,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/crlib/crtime"
-	"github.com/cockroachdb/errors"
 	"github.com/stretchr/testify/require"
 )
 

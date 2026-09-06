@@ -10,8 +10,6 @@ import (
 	"io/fs"
 	"os"
 	"syscall"
-
-	"github.com/cockroachdb/errors"
 )
 
 func wrapOSFileImpl(f *os.File) File {
@@ -21,7 +19,7 @@ func wrapOSFileImpl(f *os.File) File {
 func (defaultFS) OpenDir(name string) (File, error) {
 	f, err := os.OpenFile(name, syscall.O_CLOEXEC, 0)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, withStack(err)
 	}
 	return &windowsDir{f}, nil
 }

@@ -12,7 +12,6 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/cockroachdb/errors"
 	"github.com/stretchr/testify/require"
 )
 
@@ -176,7 +175,7 @@ func (fs *enospcMockFS) maybeENOSPC() error {
 		}
 		// Wrap the error to test error unwrapping.
 		err := &os.PathError{Op: "mock", Path: "mock", Err: syscall.ENOSPC}
-		return errors.Wrap(err, "uh oh")
+		return err
 	}
 	return nil
 }
