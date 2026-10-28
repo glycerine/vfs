@@ -5,22 +5,26 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestSyncingFile(t *testing.T) {
 	const mb = 1 << 20
 
 	tmpf, err := os.CreateTemp("", "pebble-db-syncing-file-")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	filename := tmpf.Name()
-	require.NoError(t, tmpf.Close())
+	if err := tmpf.Close(); err != nil {
+		t.Fatal(err)
+	}
 	defer os.Remove(filename)
 
 	f, err := Default.Create(filename, WriteCategoryUnspecified)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	tf := &mockSyncToFile{File: f, canSyncTo: true}
 	sf := NewSyncingFile(tf, SyncingFileOptions{BytesPerSync: 8 << 10 /* 8 KB */})
@@ -38,7 +42,9 @@ func TestSyncingFile(t *testing.T) {
 	}
 	for i, c := range testCases {
 		_, err := sf.Write(make([]byte, c.n))
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		syncTo := sf.(*syncingFile).syncOffset.Load()
 		if c.expectedSyncTo != syncTo {
@@ -70,14 +76,20 @@ close: test [<nil>]
 	for _, c := range testCases {
 		t.Run(fmt.Sprintf("canSyncTo=%t", c.canSyncTo), func(t *testing.T) {
 			tmpf, err := os.CreateTemp("", "pebble-db-syncing-file-")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			filename := tmpf.Name()
-			require.NoError(t, tmpf.Close())
+			if err := tmpf.Close(); err != nil {
+				t.Fatal(err)
+			}
 			defer os.Remove(filename)
 
 			f, err := Default.Create(filename, WriteCategoryUnspecified)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			var buf bytes.Buffer
 			tf := &mockSyncToFile{File: f, canSyncTo: c.canSyncTo}
@@ -87,7 +99,9 @@ close: test [<nil>]
 			write := func(n int64) {
 				t.Helper()
 				_, err := s.Write(make([]byte, n))
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			const mb = 1 << 20
@@ -97,7 +111,9 @@ close: test [<nil>]
 
 			fmt.Fprintf(&buf, "pre-close: %s [offset=%d sync-offset=%d]\n",
 				lf.name, s.offset.Load(), s.syncOffset.Load())
-			require.NoError(t, s.Close())
+			if err := s.Close(); err != nil {
+				t.Fatal(err)
+			}
 
 			if s := buf.String(); c.expected != s {
 				t.Fatalf("expected\n%s\nbut found\n%s", c.expected, s)
@@ -139,14 +155,20 @@ func TestSyncingFileNoSyncOnClose(t *testing.T) {
 	for _, c := range testCases {
 		t.Run(fmt.Sprintf("useSyncTo=%v", c.useSyncTo), func(t *testing.T) {
 			tmpf, err := os.CreateTemp("", "pebble-db-syncing-file-")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			filename := tmpf.Name()
-			require.NoError(t, tmpf.Close())
+			if err := tmpf.Close(); err != nil {
+				t.Fatal(err)
+			}
 			defer os.Remove(filename)
 
 			f, err := Default.Create(filename, WriteCategoryUnspecified)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			tf := &mockSyncToFile{f, c.useSyncTo}
 			s := NewSyncingFile(tf, SyncingFileOptions{NoSyncOnClose: true, BytesPerSync: 8 << 10}).(*syncingFile)
@@ -154,7 +176,9 @@ func TestSyncingFileNoSyncOnClose(t *testing.T) {
 			write := func(n int64) {
 				t.Helper()
 				_, err := s.Write(make([]byte, n))
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			const mb = 1 << 20
@@ -163,7 +187,9 @@ func TestSyncingFileNoSyncOnClose(t *testing.T) {
 			write(128)    // No sync for the same reason
 
 			syncToBefore := s.syncOffset.Load()
-			require.NoError(t, s.Close())
+			if err := s.Close(); err != nil {
+				t.Fatal(err)
+			}
 			syncToAfter := s.syncOffset.Load()
 
 			// If we're not able to non-blockingly sync using sync-to,

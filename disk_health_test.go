@@ -9,13 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/glycerine/vfs/internal/crtime"
-	"github.com/stretchr/testify/require"
 )
 
 type mockFile struct {
@@ -295,17 +296,27 @@ func TestDiskHealthChecking_WriteStatsCollector(t *testing.T) {
 
 			for _, category := range tc.writeCategories {
 				f, err := fs.Create("test", category)
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 				for i := 0; i < tc.numWrites; i++ {
 					n, err := f.Write(writeBuffer)
-					require.NoError(t, err)
-					require.Equal(t, writeSizeInBytes, uint64(n))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if got := uint64(n); got != writeSizeInBytes {
+						t.Fatalf("write size = %d, want %d", got, writeSizeInBytes)
+					}
 				}
 				err = f.Close()
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 			expectedStats := statsCollector.GetStats()
-			require.Equal(t, tc.wantStats, expectedStats)
+			if !slices.Equal(expectedStats, tc.wantStats) {
+				t.Fatalf("stats = %v, want %v", expectedStats, tc.wantStats)
+			}
 		})
 	}
 }
@@ -370,8 +381,12 @@ func TestDiskHealthChecking_File(t *testing.T) {
 				if d.Seconds() < slowThreshold.Seconds() {
 					t.Fatalf("expected %0.1f to be greater than threshold %0.1f", d.Seconds(), slowThreshold.Seconds())
 				}
-				require.Equal(t, tc.writeSize, i.WriteSize)
-				require.Equal(t, tc.op, i.OpType)
+				if i.WriteSize != tc.writeSize {
+					t.Fatalf("write size = %d, want %d", i.WriteSize, tc.writeSize)
+				}
+				if i.OpType != tc.op {
+					t.Fatalf("operation = %v, want %v", i.OpType, tc.op)
+				}
 			case <-time.After(10 * time.Second):
 				t.Fatal("disk stall detector did not detect slow disk operation")
 			}
@@ -383,7 +398,9 @@ func TestDiskHealthChecking_NotTooManyOps(t *testing.T) {
 	numBitsForOpType := 64 - deltaBits - writeSizeBits
 	numOpTypesAllowed := int(math.Pow(2, float64(numBitsForOpType)))
 	numOpTypes := int(opTypeMax)
-	require.LessOrEqual(t, numOpTypes, numOpTypesAllowed)
+	if numOpTypes > numOpTypesAllowed {
+		t.Fatalf("%d operation types exceed limit %d", numOpTypes, numOpTypesAllowed)
+	}
 }
 
 func TestDiskHealthChecking_File_PackingAndUnpacking(t *testing.T) {
@@ -448,9 +465,15 @@ func TestDiskHealthChecking_File_PackingAndUnpacking(t *testing.T) {
 			packed := pack(tc.delta, tc.writeSize, tc.opType)
 			gotDelta, gotWriteSize, gotOpType := unpack(packed)
 
-			require.Equal(t, tc.wantDelta, gotDelta)
-			require.Equal(t, tc.wantWriteSize, gotWriteSize)
-			require.Equal(t, tc.opType, gotOpType)
+			if gotDelta != tc.wantDelta {
+				t.Fatalf("delta = %s, want %s", gotDelta, tc.wantDelta)
+			}
+			if gotWriteSize != tc.wantWriteSize {
+				t.Fatalf("write size = %d, want %d", gotWriteSize, tc.wantWriteSize)
+			}
+			if gotOpType != tc.opType {
+				t.Fatalf("operation = %v, want %v", gotOpType, tc.opType)
+			}
 		})
 	}
 }
@@ -472,12 +495,21 @@ func TestDiskHealthChecking_File_Underflow(t *testing.T) {
 
 		// Assert that the time since tCreate (in milliseconds) is indeed greater
 		// than the max delta that can fit.
-		require.True(t, tCreate.Elapsed().Milliseconds() > 1<<deltaBits-1)
+		if elapsed := tCreate.Elapsed().Milliseconds(); elapsed <= 1<<deltaBits-1 {
+			t.Fatalf("elapsed milliseconds = %d, expected overflow threshold > %d", elapsed, int64(1<<deltaBits-1))
+		}
 
 		// Attempting to start the clock for a new operation on the file should
 		// trigger a panic, as the calculated delta from the file creation time would
 		// result in integer overflow.
-		require.Panics(t, func() { _, _ = hcFile.Write([]byte("uh oh")) })
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Fatal("expected panic")
+				}
+			}()
+			_, _ = hcFile.Write([]byte("uh oh"))
+		}()
 	})
 	t.Run("pretty large delta but not too large leads to no panic", func(t *testing.T) {
 		// Given the packing scheme, 34 years of process uptime will lead to a delta
@@ -485,8 +517,10 @@ func TestDiskHealthChecking_File_Underflow(t *testing.T) {
 		tCreate := crtime.NowMono() - crtime.Mono(34*time.Hour*24*365)
 		hcFile.createTime = tCreate
 
-		require.True(t, tCreate.Elapsed().Milliseconds() < 1<<deltaBits-1)
-		require.NotPanics(t, func() { _, _ = hcFile.Write([]byte("should be fine")) })
+		if elapsed := tCreate.Elapsed().Milliseconds(); elapsed >= 1<<deltaBits-1 {
+			t.Fatalf("elapsed milliseconds = %d, expected below threshold %d", elapsed, int64(1<<deltaBits-1))
+		}
+		_, _ = hcFile.Write([]byte("should be fine"))
 	})
 }
 
@@ -579,10 +613,14 @@ func TestDiskHealthChecking_Filesystem(t *testing.T) {
 	var lastOpType OpType
 	fs, closer := WithDiskHealthChecks(filesystemOpsMockFS(unstall), stallThreshold, nil,
 		func(info DiskSlowInfo) {
-			require.Equal(t, 0, info.WriteSize)
+			if info.WriteSize != 0 {
+				t.Fatalf("write size = %d, want 0", info.WriteSize)
+			}
 			stallCount.Add(1)
 			if lastOpType != info.OpType {
-				require.Equal(t, expectedOpType, info.OpType)
+				if info.OpType != expectedOpType {
+					t.Fatalf("operation = %v, want %v", info.OpType, expectedOpType)
+				}
 				lastOpType = info.OpType
 				// Sending on `unstall` releases the blocked filesystem
 				// operation, allowing the test to proceed.
@@ -602,7 +640,9 @@ func TestDiskHealthChecking_Filesystem(t *testing.T) {
 			// and sends to the `unstall` channel.
 			o.f()
 			after := stallCount.Load()
-			require.Greater(t, int(after-before), 0)
+			if after <= before {
+				t.Fatalf("stall count did not increase: before=%d after=%d", before, after)
+			}
 		})
 	}
 }
@@ -651,7 +691,9 @@ func TestDiskHealthChecking_Filesystem_Close(t *testing.T) {
 
 		select {
 		case stalledPath := <-stalled:
-			require.Equal(t, filename, stalledPath)
+			if stalledPath != filename {
+				t.Fatalf("stalled path = %q, want %q", stalledPath, filename)
+			}
 		case <-time.After(10 * time.Second):
 			t.Fatalf("timed out waiting for stall")
 		}
@@ -661,7 +703,9 @@ func TestDiskHealthChecking_Filesystem_Close(t *testing.T) {
 		// Invoke the closer. This will cause the long-running goroutine to
 		// exit, but the fs should still be usable and should still detect
 		// subsequent stalls on the next iteration.
-		require.NoError(t, closer.Close())
+		if err := closer.Close(); err != nil {
+			t.Fatal(err)
+		}
 	}
 	wg.Wait()
 }
@@ -677,12 +721,14 @@ func TestDiskSlowInfo(t *testing.T) {
 	result := info.String()
 
 	// Essential information should be present
-	require.Contains(t, result, "disk slowness detected")
-	require.Contains(t, result, "write")
-	require.Contains(t, result, filepath.FromSlash(info.Path))
-	require.Contains(t, result, "(123 bytes)")
-	require.Contains(t, result, "5.0s")
+	for _, want := range []string{"disk slowness detected", "write", filepath.FromSlash(info.Path), "(123 bytes)", "5.0s"} {
+		if !strings.Contains(result, want) {
+			t.Errorf("result %q does not contain %q", result, want)
+		}
+	}
 
 	// Should not contain just the filename without full path
-	require.NotContains(t, result, " 000123.log ")
+	if strings.Contains(result, " 000123.log ") {
+		t.Errorf("result unexpectedly contains bare filename: %q", result)
+	}
 }

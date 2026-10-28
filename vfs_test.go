@@ -13,7 +13,6 @@ import (
 
 	"github.com/glycerine/vfs/internal/datadriven"
 	"github.com/glycerine/vfs/internal/oserror"
-	"github.com/stretchr/testify/require"
 )
 
 func normalizeError(err error) error {
@@ -267,7 +266,9 @@ func TestVFS(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Run("disk", func(t *testing.T) {
 			dir, err := os.MkdirTemp("", "test-vfs")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			defer func() {
 				_ = os.RemoveAll(dir)
 			}()
@@ -278,17 +279,23 @@ func TestVFS(t *testing.T) {
 
 func TestVFSGetDiskUsage(t *testing.T) {
 	dir, err := os.MkdirTemp("", "test-free-space")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer func() {
 		_ = os.RemoveAll(dir)
 	}()
 	_, err = Default.GetDiskUsage(dir)
-	require.Nil(t, err)
+	if got := err; got != nil {
+		t.Fatalf("got %v, want nil", got)
+	}
 }
 
 func TestVFSCreateLinkSemantics(t *testing.T) {
 	dir, err := os.MkdirTemp("", "test-create-link")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer func() { _ = os.RemoveAll(dir) }()
 
 	for _, fs := range []FS{Default, NewMem()} {
@@ -296,37 +303,61 @@ func TestVFSCreateLinkSemantics(t *testing.T) {
 			writeFile := func(path, contents string) {
 				path = fs.PathJoin(dir, path)
 				f, err := fs.Create(path, WriteCategoryUnspecified)
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 				_, err = f.Write([]byte(contents))
-				require.NoError(t, err)
-				require.NoError(t, f.Close())
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := f.Close(); err != nil {
+					t.Fatal(err)
+				}
 			}
 			readFile := func(path string) string {
 				path = fs.PathJoin(dir, path)
 				f, err := fs.Open(path)
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 				b, err := io.ReadAll(f)
-				require.NoError(t, err)
-				require.NoError(t, f.Close())
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := f.Close(); err != nil {
+					t.Fatal(err)
+				}
 				return string(b)
 			}
-			require.NoError(t, fs.MkdirAll(dir, 0755))
+			if err := fs.MkdirAll(dir, 0755); err != nil {
+				t.Fatal(err)
+			}
 
 			// Write a file 'foo' and create a hardlink at 'bar'.
 			writeFile("foo", "foo")
-			require.NoError(t, fs.Link(fs.PathJoin(dir, "foo"), fs.PathJoin(dir, "bar")))
+			if err := fs.Link(fs.PathJoin(dir, "foo"), fs.PathJoin(dir, "bar")); err != nil {
+				t.Fatal(err)
+			}
 
 			// Both files should contain equal contents, because they're backed by
 			// the same inode.
-			require.Equal(t, "foo", readFile("foo"))
-			require.Equal(t, "foo", readFile("bar"))
+			if got := readFile("foo"); got != "foo" {
+				t.Fatalf("foo contains %q", got)
+			}
+			if got := readFile("bar"); got != "foo" {
+				t.Fatalf("bar contains %q, want foo", got)
+			}
 
 			// Calling Create on 'bar' must NOT truncate 'foo'. It should create a
 			// new file at path 'bar' with a new inode.
 			writeFile("bar", "bar")
 
-			require.Equal(t, "foo", readFile("foo"))
-			require.Equal(t, "bar", readFile("bar"))
+			if got := readFile("foo"); got != "foo" {
+				t.Fatalf("foo contains %q", got)
+			}
+			if got := readFile("bar"); got != "bar" {
+				t.Fatalf("bar contains %q", got)
+			}
 		})
 	}
 }
@@ -341,10 +372,16 @@ func TestVFSRootDirName(t *testing.T) {
 			sep = string(os.PathSeparator)
 		}
 		rootDir, err := fs.Open(sep)
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 		fi, err := rootDir.Stat()
-		require.NoError(t, err)
-		require.Equal(t, sep, fi.Name())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := fi.Name(); got != sep {
+			t.Fatalf("root name = %q, want %q", got, sep)
+		}
 	}
 }
 
@@ -352,8 +389,6 @@ func TestVFSRootDirName(t *testing.T) {
 // associated string, which could result in a runtime panic.
 func TestOpType(t *testing.T) {
 	for i := 0; i < int(opTypeMax); i++ {
-		require.NotPanics(t, func() {
-			_ = OpType(i).String()
-		})
+		_ = OpType(i).String()
 	}
 }

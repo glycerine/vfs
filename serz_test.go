@@ -3,9 +3,8 @@ package vfs
 import (
 	iofs "io/fs"
 	"os"
+	"slices"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 var _ = os.Remove
@@ -17,15 +16,25 @@ func TestSerz101(t *testing.T) {
 	fs := NewMem()
 
 	// Create directory structure
-	require.NoError(t, fs.MkdirAll("/a/b/c", 0755))
-	require.NoError(t, fs.MkdirAll("/a/d", 0755))
-	require.NoError(t, fs.MkdirAll("/x", 0755))
+	if err := fs.MkdirAll("/a/b/c", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.MkdirAll("/a/d", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := fs.MkdirAll("/x", 0755); err != nil {
+		t.Fatal(err)
+	}
 
 	// Create files
 	for _, p := range []string{"/a/b/c/f1", "/a/b/f2", "/a/d/f3", "/x/f4", "/top"} {
 		f, err := fs.Create(p, WriteCategoryUnspecified)
-		require.NoError(t, err)
-		require.NoError(t, f.Close())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	// serz
@@ -40,11 +49,15 @@ func TestSerz101(t *testing.T) {
 	// Test 1: Full walk from root, collect all paths
 	var paths []string
 	err := fs2.WalkDir("/", func(path string, d iofs.DirEntry, err error) error {
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 		paths = append(paths, path)
 		return nil
 	})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	expected := []string{
 		"/",
@@ -59,6 +72,8 @@ func TestSerz101(t *testing.T) {
 		"/x",
 		"/x/f4",
 	}
-	require.Equal(t, expected, paths)
+	if !slices.Equal(paths, expected) {
+		t.Fatalf("paths = %v, want %v", paths, expected)
+	}
 	//vv("good: done with Serz101")
 }

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/glycerine/vfs"
-	"github.com/stretchr/testify/require"
 )
 
 var lockFilename = flag.String("lockfile", "", "File to lock. A non-empty value implies a child process.")
@@ -29,12 +28,16 @@ func TestLock(t *testing.T) {
 		filename = *lockFilename
 	} else {
 		f, err := os.CreateTemp("", "golang-pebble-db-testlock-")
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		filename = f.Name()
 		// NB: On Windows, locking will fail if the file is already open by the
 		// current process, so we close the lockfile here.
-		require.NoError(t, f.Close())
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
 		defer os.Remove(filename)
 	}
 
@@ -79,16 +82,22 @@ func TestLock(t *testing.T) {
 
 func TestLockSameProcess(t *testing.T) {
 	f, err := os.CreateTemp("", "pebble-testlocksameprocess-")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	filename := f.Name()
 
 	// NB: On Windows, locking will fail if the file is already open by the
 	// current process, so we close the lockfile here.
-	require.NoError(t, f.Close())
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 	defer os.Remove(filename)
 
 	lock1, err := vfs.Default.Lock(filename)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Locking the file again from within the same process should fail.
 	// On Unix, Lock should detect the file in the global map of
@@ -96,7 +105,11 @@ func TestLockSameProcess(t *testing.T) {
 	// On Windows, locking will fail since the file is already open by the
 	// current process.
 	_, err = vfs.Default.Lock(filename)
-	require.Error(t, err)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
 
-	require.NoError(t, lock1.Close())
+	if err := lock1.Close(); err != nil {
+		t.Fatal(err)
+	}
 }

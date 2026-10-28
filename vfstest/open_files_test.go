@@ -6,13 +6,14 @@ import (
 	"testing"
 
 	"github.com/glycerine/vfs"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOpenFiles(t *testing.T) {
 	var buf bytes.Buffer
 	fs, dumpOpenFiles := WithOpenFileTracking(vfs.NewMem())
-	require.NoError(t, fs.MkdirAll("dir", os.ModePerm))
+	if err := fs.MkdirAll("dir", os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
 
 	type fileOpenOp struct {
 		name string
@@ -21,27 +22,37 @@ func TestOpenFiles(t *testing.T) {
 	fileOpenOps := []fileOpenOp{
 		{name: "OpenDir", fn: func() vfs.File {
 			f, err := fs.OpenDir("dir")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			return f
 		}},
 		{name: "Create", fn: func() vfs.File {
 			f, err := fs.Create("foo", vfs.WriteCategoryUnspecified)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			return f
 		}},
 		{name: "Open", fn: func() vfs.File {
 			f, err := fs.Open("foo")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			return f
 		}},
 		{name: "OpenReadWrite", fn: func() vfs.File {
 			f, err := fs.Open("foo")
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			return f
 		}},
 		{name: "ReuseForWrite", fn: func() vfs.File {
 			f, err := fs.ReuseForWrite("foo", "bar", vfs.WriteCategoryUnspecified)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 			return f
 		}},
 	}
@@ -53,11 +64,17 @@ func TestOpenFiles(t *testing.T) {
 				buf.Reset()
 				dumpOpenFiles(&buf)
 				t.Log(buf.String())
-				require.Greater(t, buf.Len(), 0)
-				require.NoError(t, f.Close())
+				if buf.Len() == 0 {
+					t.Fatal("open-file dump is empty")
+				}
+				if err := f.Close(); err != nil {
+					t.Fatal(err)
+				}
 				buf.Reset()
 				dumpOpenFiles(&buf)
-				require.Equal(t, 0, buf.Len())
+				if buf.Len() != 0 {
+					t.Fatalf("open-file dump after close: %s", &buf)
+				}
 			})
 		}
 	})
@@ -65,10 +82,14 @@ func TestOpenFiles(t *testing.T) {
 		for _, op := range fileOpenOps {
 			t.Run(op.name, func(t *testing.T) {
 				f := op.fn()
-				require.NoError(t, f.Close())
+				if err := f.Close(); err != nil {
+					t.Fatal(err)
+				}
 				buf.Reset()
 				dumpOpenFiles(&buf)
-				require.Equal(t, 0, buf.Len())
+				if buf.Len() != 0 {
+					t.Fatalf("open-file dump after close: %s", &buf)
+				}
 			})
 		}
 	})

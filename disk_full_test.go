@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 var filesystemWriteOps = map[string]func(FS) error{
@@ -45,11 +43,17 @@ func TestOnDiskFull_FS(t *testing.T) {
 			// call should return ENOSPC. Our registered callback should be
 			// invoked, then the method should be retried and return a nil
 			// error.
-			require.NoError(t, fn(fs))
-			require.Equal(t, 1, callbackInvocations)
+			if err := fn(fs); err != nil {
+				t.Fatal(err)
+			}
+			if callbackInvocations != 1 {
+				t.Fatalf("callback invocations = %d, want 1", callbackInvocations)
+			}
 			// The inner filesystem should be invoked twice because of the
 			// retry.
-			require.Equal(t, 2, innerFS.mu.invocations)
+			if innerFS.mu.invocations != 2 {
+				t.Fatalf("inner invocations = %d, want 2", innerFS.mu.invocations)
+			}
 		})
 	}
 }
@@ -63,7 +67,9 @@ func TestOnDiskFull_File(t *testing.T) {
 		})
 
 		f, err := fs.Create("foo", WriteCategoryUnspecified)
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// The next Write should ENOSPC.
 		innerFS.addENOSPC(1)
@@ -73,12 +79,20 @@ func TestOnDiskFull_File(t *testing.T) {
 		// should be invoked, then Write should be retried and return a nil error
 		// and five bytes written.
 		n, err := f.Write([]byte("hello world"))
-		require.NoError(t, err)
-		require.Equal(t, 11, n)
-		require.Equal(t, 1, callbackInvocations)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != 11 {
+			t.Fatalf("bytes written = %d, want 11", n)
+		}
+		if callbackInvocations != 1 {
+			t.Fatalf("callback invocations = %d, want 1", callbackInvocations)
+		}
 		// The inner filesystem should be invoked 3 times. Once during Create
 		// and twice during Write.
-		require.Equal(t, 3, innerFS.mu.invocations)
+		if innerFS.mu.invocations != 3 {
+			t.Fatalf("inner invocations = %d, want 3", innerFS.mu.invocations)
+		}
 	})
 	t.Run("Sync", func(t *testing.T) {
 		innerFS := &enospcMockFS{bytesWritten: 6}
@@ -88,18 +102,26 @@ func TestOnDiskFull_File(t *testing.T) {
 		})
 
 		f, err := fs.Create("foo", WriteCategoryUnspecified)
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		// The next Sync should ENOSPC. The callback should be invoked, but a
 		// Sync cannot be retried.
 		innerFS.addENOSPC(1)
 
 		err = f.Sync()
-		require.Error(t, err)
-		require.Equal(t, 1, callbackInvocations)
+		if err == nil {
+			t.Fatal("expected an error")
+		}
+		if callbackInvocations != 1 {
+			t.Fatalf("callback invocations = %d, want 1", callbackInvocations)
+		}
 		// The inner filesystem should be invoked 2 times. Once during Create
 		// and once during Sync.
-		require.Equal(t, 2, innerFS.mu.invocations)
+		if innerFS.mu.invocations != 2 {
+			t.Fatalf("inner invocations = %d, want 2", innerFS.mu.invocations)
+		}
 	})
 }
 
@@ -117,14 +139,20 @@ func TestOnDiskFull_Concurrent(t *testing.T) {
 		wg.Go(func() {
 			_, err := fs.Create("foo", WriteCategoryUnspecified)
 			// They all should succeed on retry.
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 	wg.Wait()
 	// Since all operations should start before the first one returns an
 	// ENOSPC, the callback should only be invoked once.
-	require.Equal(t, int32(1), callbackInvocations.Load())
-	require.Equal(t, 2*concurrentWriters, innerFS.mu.invocations)
+	if got := callbackInvocations.Load(); got != 1 {
+		t.Fatalf("callback invocations = %d, want 1", got)
+	}
+	if want := 2 * concurrentWriters; innerFS.mu.invocations != want {
+		t.Fatalf("inner invocations = %d, want %d", innerFS.mu.invocations, want)
+	}
 }
 
 type enospcMockFS struct {
@@ -261,12 +289,20 @@ func BenchmarkOnDiskFull(b *testing.B) {
 	fs := OnDiskFull(NewMem(), func() {})
 
 	f, err := fs.Create("foo", WriteCategoryUnspecified)
-	require.NoError(b, err)
-	defer func() { require.NoError(b, f.Close()) }()
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			b.Error(err)
+		}
+	}()
 
 	payload := []byte("hello world")
 	for i := 0; i < b.N; i++ {
 		_, err := f.Write(payload)
-		require.NoError(b, err)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }

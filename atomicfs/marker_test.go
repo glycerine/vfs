@@ -14,7 +14,6 @@ import (
 	"github.com/glycerine/vfs"
 	"github.com/glycerine/vfs/errorfs"
 	"github.com/glycerine/vfs/internal/datadriven"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMarker_FilenameRoundtrip(t *testing.T) {
@@ -29,28 +28,34 @@ func TestMarker_FilenameRoundtrip(t *testing.T) {
 	for _, testFilename := range filenames {
 		t.Run(testFilename, func(t *testing.T) {
 			name, iter, value, err := parseMarkerFilename(testFilename)
-			require.NoError(t, err)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			filename := markerFilename(name, iter, value)
-			require.Equal(t, testFilename, filename)
+			if filename != testFilename {
+				t.Fatalf("filename = %q, want %q", filename, testFilename)
+			}
 		})
 	}
 }
 
 func TestMarker_Parsefilename(t *testing.T) {
-	testCases := map[string]func(require.TestingT, error, ...interface{}){
-		"marker.current.000003.MANIFEST-000021":  require.NoError,
-		"marker.current.10.MANIFEST-000021":      require.NoError,
-		"marker.v.10.1.2.3.4":                    require.NoError,
-		"marker.name.18446744073709551615.value": require.NoError,
-		"marke.current.000003.MANIFEST-000021":   require.Error,
-		"marker.current.foo.MANIFEST-000021":     require.Error,
-		"marker.current.ffffff.MANIFEST-000021":  require.Error,
+	testCases := map[string]bool{
+		"marker.current.000003.MANIFEST-000021":  false,
+		"marker.current.10.MANIFEST-000021":      false,
+		"marker.v.10.1.2.3.4":                    false,
+		"marker.name.18446744073709551615.value": false,
+		"marke.current.000003.MANIFEST-000021":   true,
+		"marker.current.foo.MANIFEST-000021":     true,
+		"marker.current.ffffff.MANIFEST-000021":  true,
 	}
-	for filename, assert := range testCases {
+	for filename, wantErr := range testCases {
 		t.Run(filename, func(t *testing.T) {
 			_, _, _, err := parseMarkerFilename(filename)
-			assert(t, err)
+			if (err != nil) != wantErr {
+				t.Fatalf("error = %v, wantErr %t", err, wantErr)
+			}
 		})
 	}
 }
@@ -106,7 +111,9 @@ func TestMarker(t *testing.T) {
 			td.ScanArgs(t, "dir", &dir)
 			td.ScanArgs(t, "marker", &marker)
 			m := markers[memFS.PathJoin(dir, marker)]
-			require.NotNil(t, m)
+			if m == nil {
+				t.Fatal("unexpected nil")
+			}
 			err := m.Move(td.Input)
 			if err != nil {
 				return err.Error()
@@ -118,7 +125,9 @@ func TestMarker(t *testing.T) {
 			td.ScanArgs(t, "dir", &dir)
 			td.ScanArgs(t, "marker", &marker)
 			m := markers[memFS.PathJoin(dir, marker)]
-			require.NotNil(t, m)
+			if m == nil {
+				t.Fatal("unexpected nil")
+			}
 			return fmt.Sprintf("%d", m.NextIter())
 
 		case "read":
@@ -136,9 +145,13 @@ func TestMarker(t *testing.T) {
 			td.ScanArgs(t, "dir", &dir)
 			td.ScanArgs(t, "marker", &marker)
 			m := markers[memFS.PathJoin(dir, marker)]
-			require.NotNil(t, m)
+			if m == nil {
+				t.Fatal("unexpected nil")
+			}
 			obsoleteCount := len(m.obsoleteFiles)
-			require.NoError(t, m.RemoveObsolete())
+			if err := m.RemoveObsolete(); err != nil {
+				t.Fatal(err)
+			}
 			removedCount := obsoleteCount - len(m.obsoleteFiles)
 			return fmt.Sprintf("Removed %d files.", removedCount)
 
@@ -165,34 +178,64 @@ func TestMarker_StrictSync(t *testing.T) {
 	mem := vfs.NewCrashableMem()
 	syncDir := func(dir string) {
 		fdir, err := mem.OpenDir(dir)
-		require.NoError(t, err)
-		require.NoError(t, fdir.Sync())
-		require.NoError(t, fdir.Close())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := fdir.Sync(); err != nil {
+			t.Fatal(err)
+		}
+		if err := fdir.Close(); err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	require.NoError(t, mem.MkdirAll("foo", os.ModePerm))
+	if err := mem.MkdirAll("foo", os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
 	syncDir("")
 	m, v, err := LocateMarker(mem, "foo", "bar")
-	require.NoError(t, err)
-	require.Equal(t, "", v)
-	require.NoError(t, m.Move("hello"))
-	require.NoError(t, m.Close())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != "" {
+		t.Fatalf("value = %q, want empty", v)
+	}
+	if err := m.Move("hello"); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	// Discard any unsynced writes to make sure we set up the test
 	// preconditions correctly.
 	crashFS := mem.CrashClone(vfs.CrashCloneCfg{UnsyncedDataPercent: 0})
 	m, v, err = LocateMarker(crashFS, "foo", "bar")
-	require.NoError(t, err)
-	require.Equal(t, "hello", v)
-	require.NoError(t, m.Move("hello-world"))
-	require.NoError(t, m.Close())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != "hello" {
+		t.Fatalf("value = %q, want hello", v)
+	}
+	if err := m.Move("hello-world"); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	// Discard any unsynced writes.
 	crashFS = crashFS.CrashClone(vfs.CrashCloneCfg{UnsyncedDataPercent: 0})
 	m, v, err = LocateMarker(crashFS, "foo", "bar")
-	require.NoError(t, err)
-	require.Equal(t, "hello-world", v)
-	require.NoError(t, m.Close())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != "hello-world" {
+		t.Fatalf("value = %q, want hello-world", v)
+	}
+	if err := m.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 // TestMarker_FaultTolerance attempts a series of operations on atomic
@@ -249,20 +292,30 @@ func TestMarker_FaultTolerance(t *testing.T) {
 						if err != nil {
 							return err
 						}
-						require.NotNil(t, m)
-						require.Equal(t, op.value, v)
+						if m == nil {
+							t.Fatal("unexpected nil")
+						}
+						if v != op.value {
+							t.Fatalf("value = %q, want %q", v, op.value)
+						}
 						if existingMarker := markers[op.name]; existingMarker != nil {
-							require.NoError(t, existingMarker.Close())
+							if err := existingMarker.Close(); err != nil {
+								t.Fatal(err)
+							}
 						}
 						markers[op.name] = m
 						return nil
 					case "move":
 						m := markers[op.name]
-						require.NotNil(t, m)
+						if m == nil {
+							t.Fatal("unexpected nil")
+						}
 						return m.Move(op.value)
 					case "rm-obsolete":
 						m := markers[op.name]
-						require.NotNil(t, m)
+						if m == nil {
+							t.Fatal("unexpected nil")
+						}
 						return m.RemoveObsolete()
 					default:
 						panic("unreachable")
@@ -276,11 +329,15 @@ func TestMarker_FaultTolerance(t *testing.T) {
 				if errors.Is(err, errorfs.ErrInjected) {
 					err = runOp()
 				}
-				require.NoError(t, err)
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			for _, m := range markers {
-				require.NoError(t, m.Close())
+				if err := m.Close(); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			// Stop if the number of operations in the test case is
