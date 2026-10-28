@@ -2,8 +2,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/glycerine/fwd v1.1.4-beta.jea h1:penEwsXMBPCMCH+iUj/HKRIuRzfESzLIk99OcttgqTU=
 github.com/glycerine/fwd v1.1.4-beta.jea/go.mod h1:N5KPZnp8z9AaPcR/9r5u2BcdqnlfcTcEGbX1In/yyIE=
-github.com/glycerine/greenpack v0.541.0 h1:27vVEEmJTCXfRz7EiHqkAY+uXM54rUKHEAXxqPLC+QE=
-github.com/glycerine/greenpack v0.541.0/go.mod h1:DUVEsWj48QijXF52Jy83ibYhE1c4VIdWFH7fwAWuXbI=
+github.com/glycerine/greenpack v0.542.0 h1:r3tHv4d+Zer1XyapMl7CRwYzBKeRsQplvdfdMdah31M=
+github.com/glycerine/greenpack v0.542.0/go.mod h1:mxRWCuBkqGQUk/aPTJP3fCjbP+35XDRLb0SeAanCvwo=
 github.com/klauspost/compress v1.18.4 h1:RPhnKRAQ4Fh8zU2FY/6ZFDwTVTxgJ/EMydqSTzE9a2c=
 github.com/klauspost/compress v1.18.4/go.mod h1:R0h/fSBs8DE4ENlcrlib3PsXS61voFxhIs2DeRhCvJ4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
