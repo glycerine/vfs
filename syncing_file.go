@@ -1,17 +1,15 @@
-// Copyright 2019 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfs
 
 import (
+	"fmt"
 	"sync/atomic"
-
-	"github.com/cockroachdb/errors/withstack"
 )
 
 func withStack(err error) error {
-	return withstack.WithStackDepth(err, 1)
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%w", err)
 }
 
 // SyncingFileOptions holds the options for a syncingFile.

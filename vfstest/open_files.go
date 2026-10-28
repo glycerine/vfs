@@ -1,17 +1,14 @@
-// Copyright 2024 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfstest
 
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"runtime"
 	"sync"
 
-	"github.com/cockroachdb/pebble/vfs"
+	"github.com/glycerine/vfs"
 )
 
 // WithOpenFileTracking wraps a FS, returning an FS that will monitor open
@@ -120,6 +117,17 @@ func (fs *openFilesFS) GetDiskUsage(path string) (vfs.DiskUsage, error) {
 }
 
 func (fs *openFilesFS) Unwrap() vfs.FS { return fs.inner }
+
+func (fs *openFilesFS) ReadDir(name string) ([]os.DirEntry, error) {
+	return fs.inner.ReadDir(name)
+}
+func (fs *openFilesFS) IsReal() bool { return fs.inner.IsReal() }
+func (fs *openFilesFS) WalkDir(path string, fn fs.WalkDirFunc) error {
+	return fs.inner.WalkDir(path, fn)
+}
+func (fs *openFilesFS) MountReadOnlyRealDir(from, to string) error {
+	return fs.inner.MountReadOnlyRealDir(from, to)
+}
 
 func (fs *openFilesFS) wrapOpenFile(f vfs.File, err error) (vfs.File, error) {
 	if f == nil || err != nil {

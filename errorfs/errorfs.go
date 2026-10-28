@@ -1,21 +1,18 @@
-// Copyright 2020 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package errorfs
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/errors/oserror"
-	"github.com/cockroachdb/pebble/internal/dsl"
-	"github.com/cockroachdb/pebble/vfs"
+	"github.com/glycerine/vfs"
+	"github.com/glycerine/vfs/internal/dsl"
+	"github.com/glycerine/vfs/internal/oserror"
 )
 
 // ErrInjected is an error artificially injected for testing fs error paths.
@@ -469,6 +466,23 @@ func (fs *FS) Stat(name string) (vfs.FileInfo, error) {
 	return fs.fs.Stat(name)
 }
 
+func (fs *FS) ReadDir(name string) ([]os.DirEntry, error) {
+	if err := fs.inj.MaybeError(Op{Kind: OpList, Path: name}); err != nil {
+		return nil, err
+	}
+	return fs.fs.ReadDir(name)
+}
+
+func (fs *FS) IsReal() bool { return false }
+
+func (fs *FS) WalkDir(path string, fn iofs.WalkDirFunc) error {
+	return fs.fs.WalkDir(path, fn)
+}
+
+func (fs *FS) MountReadOnlyRealDir(from, to string) error {
+	return fs.fs.MountReadOnlyRealDir(from, to)
+}
+
 // errorFile implements vfs.File. The interface is implemented on the pointer
 // type to allow pointer equality comparisons.
 type errorFile struct {
@@ -562,3 +576,6 @@ func (f *errorFile) SyncTo(length int64) (fullSync bool, err error) {
 func (f *errorFile) Fd() uintptr {
 	return f.file.Fd()
 }
+
+func (f *errorFile) Truncate(size int64) error { return f.file.Truncate(size) }
+func (f *errorFile) Name() string              { return f.file.Name() }

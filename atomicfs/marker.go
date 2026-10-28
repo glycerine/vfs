@@ -1,7 +1,3 @@
-// Copyright 2021 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package atomicfs
 
 import (
@@ -9,9 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/errors/oserror"
-	"github.com/cockroachdb/pebble/vfs"
+	"github.com/glycerine/vfs"
+	"github.com/glycerine/vfs/internal/oserror"
 )
 
 // ReadMarker looks up the current state of a marker returning just the
@@ -145,14 +140,14 @@ func markerFilename(name string, iter uint64, value string) string {
 func parseMarkerFilename(s string) (name string, iter uint64, value string, err error) {
 	// Check for and remove the `marker.` prefix.
 	if !strings.HasPrefix(s, `marker.`) {
-		return "", 0, "", errors.Newf("invalid marker filename: %q", s)
+		return "", 0, "", fmt.Errorf("invalid marker filename: %q", s)
 	}
 	s = s[len(`marker.`):]
 
 	// Extract the marker's name.
 	i := strings.IndexByte(s, '.')
 	if i == -1 {
-		return "", 0, "", errors.Newf("invalid marker filename: %q", s)
+		return "", 0, "", fmt.Errorf("invalid marker filename: %q", s)
 	}
 	name = s[:i]
 	s = s[i+1:]
@@ -160,11 +155,11 @@ func parseMarkerFilename(s string) (name string, iter uint64, value string, err 
 	// Extract the marker's iteration number.
 	i = strings.IndexByte(s, '.')
 	if i == -1 {
-		return "", 0, "", errors.Newf("invalid marker filename: %q", s)
+		return "", 0, "", fmt.Errorf("invalid marker filename: %q", s)
 	}
 	iter, err = strconv.ParseUint(s[:i], 10, 64)
 	if err != nil {
-		return "", 0, "", errors.Newf("invalid marker filename: %q", s)
+		return "", 0, "", fmt.Errorf("invalid marker filename: %q", s)
 	}
 
 	// Everything after the iteration's `.` delimiter is the value.
@@ -235,7 +230,7 @@ func (a *Marker) Move(newValue string) error {
 		// Fsync errors are unrecoverable.
 		// See https://wiki.postgresql.org/wiki/Fsync_Errors and
 		// https://danluu.com/fsyncgate.
-		panic(errors.WithStack(err))
+		panic(fmt.Errorf("%w", err))
 	}
 	return nil
 }

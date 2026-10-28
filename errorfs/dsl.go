@@ -1,7 +1,3 @@
-// Copyright 2023 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package errorfs
 
 import (
@@ -11,8 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/pebble/internal/dsl"
+	"github.com/glycerine/vfs/internal/dsl"
 )
 
 // Predicate encodes conditional logic that determines whether to inject an
@@ -259,7 +254,7 @@ func (le LabelledError) String() string {
 // MaybeError implements Injector.
 func (le LabelledError) MaybeError(op Op) error {
 	if le.predicate == nil || le.predicate.Evaluate(op) {
-		return errors.WithStack(le)
+		return fmt.Errorf("%w", le)
 	}
 	return nil
 }
@@ -289,7 +284,7 @@ func parseRandomly(s *dsl.Scanner) Predicate {
 	} else if p > 1.0 {
 		// NB: It's not possible for p to be less than zero because we don't
 		// try to parse the '-' token.
-		panic(errors.Newf("errorfs: Randomly proability p must be within p ≤ 1.0"))
+		panic(fmt.Errorf("errorfs: Randomly proability p must be within p ≤ 1.0"))
 	}
 
 	var seed int64
@@ -303,7 +298,7 @@ func parseRandomly(s *dsl.Scanner) Predicate {
 		}
 		s.Consume(token.RPAREN)
 	default:
-		panic(errors.Errorf("errorfs: unexpected token %s; expected RPAREN | FLOAT", tok.String()))
+		panic(fmt.Errorf("errorfs: unexpected token %s; expected RPAREN | FLOAT", tok.String()))
 	}
 	return Randomly(p, seed)
 }

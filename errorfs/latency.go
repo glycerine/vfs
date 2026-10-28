@@ -11,8 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/pebble/internal/dsl"
+	"github.com/glycerine/vfs/internal/dsl"
 )
 
 // RandomLatency constructs an Injector that does not inject errors but instead
@@ -36,7 +35,7 @@ func RandomLatency(pred Predicate, mean time.Duration, seed int64, limit time.Du
 func parseRandomLatency(p *Parser, s *dsl.Scanner) Injector {
 	dur, err := time.ParseDuration(s.ConsumeString())
 	if err != nil {
-		panic(errors.Newf("parsing RandomLatency: %s", err))
+		panic(fmt.Errorf("parsing RandomLatency: %s", err))
 	}
 	lit := s.Consume(token.INT).Lit
 	seed, err := strconv.ParseInt(lit, 10, 64)
@@ -50,7 +49,7 @@ func parseRandomLatency(p *Parser, s *dsl.Scanner) Injector {
 		tok = s.Scan()
 	}
 	if tok.Kind != token.RPAREN {
-		panic(errors.Errorf("errorfs: unexpected token %s; expected %s", tok.String(), token.RPAREN))
+		panic(fmt.Errorf("errorfs: unexpected token %s; expected %s", tok.String(), token.RPAREN))
 	}
 	return RandomLatency(pred, dur, seed, 0 /* no limit */)
 }

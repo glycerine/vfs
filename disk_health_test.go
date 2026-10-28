@@ -1,7 +1,3 @@
-// Copyright 2020 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfs
 
 import (
@@ -18,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/crlib/crtime"
+	"github.com/glycerine/vfs/internal/crtime"
 	"github.com/stretchr/testify/require"
 )
 

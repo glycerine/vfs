@@ -1,7 +1,3 @@
-// Copyright 2012 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfs
 
 import (
@@ -16,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/datadriven"
+	"github.com/glycerine/vfs/internal/datadriven"
 	"github.com/stretchr/testify/require"
 )
 

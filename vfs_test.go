@@ -1,7 +1,3 @@
-// Copyright 2012 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfs
 
 import (
@@ -15,9 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/crlib/crstrings"
-	"github.com/cockroachdb/datadriven"
-	"github.com/cockroachdb/errors/oserror"
+	"github.com/glycerine/vfs/internal/datadriven"
+	"github.com/glycerine/vfs/internal/oserror"
 	"github.com/stretchr/testify/require"
 )
 
@@ -172,7 +167,7 @@ func runTestVFS(t *testing.T, baseFS FS, dir string) {
 				}
 			}
 
-			for line := range crstrings.LinesSeq(td.Input) {
+			for line := range strings.SplitSeq(td.Input, "\n") {
 				parts := strings.Fields(line)
 				if len(parts) == 0 {
 					return "<op> [<args>]"

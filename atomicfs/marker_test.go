@@ -1,23 +1,19 @@
-// Copyright 2021 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package atomicfs
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"testing"
 
-	"github.com/cockroachdb/crlib/crstrings"
-	"github.com/cockroachdb/datadriven"
-	"github.com/cockroachdb/errors"
-	"github.com/cockroachdb/pebble/vfs"
-	"github.com/cockroachdb/pebble/vfs/errorfs"
+	"github.com/glycerine/vfs"
+	"github.com/glycerine/vfs/errorfs"
+	"github.com/glycerine/vfs/internal/datadriven"
 	"github.com/stretchr/testify/require"
 )
 
@@ -147,7 +143,7 @@ func TestMarker(t *testing.T) {
 			return fmt.Sprintf("Removed %d files.", removedCount)
 
 		case "touch":
-			for filename := range crstrings.LinesSeq(td.Input) {
+			for filename := range strings.SplitSeq(td.Input, "\n") {
 				f, err := memFS.Create(filename, vfs.WriteCategoryUnspecified)
 				if err != nil {
 					return err.Error()

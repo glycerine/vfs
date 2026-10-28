@@ -1,7 +1,3 @@
-// Copyright 2020 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
 package vfs
 
 import (
@@ -16,8 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/cockroachdb/crlib/crtime"
-	"github.com/cockroachdb/redact"
+	"github.com/glycerine/vfs/internal/crtime"
 )
 
 const (
@@ -470,26 +465,36 @@ type DiskSlowInfo struct {
 }
 
 func (i DiskSlowInfo) String() string {
-	return redact.StringWithoutMarkers(i)
-}
-
-// SafeFormat implements redact.SafeFormatter.
-func (i DiskSlowInfo) SafeFormat(w redact.SafePrinter, _ rune) {
 	fullPath, err := filepath.Abs(i.Path)
 	if err != nil {
-		w.Printf("failed to get absolute path %s: %s", redact.Safe(i.Path), err)
+		return fmt.Sprintf("failed to get absolute path %s: %s", i.Path, err)
+	}
+	switch i.OpType {
+	case OpTypeWrite, OpTypeSyncTo, OpTypePreallocate:
+		return fmt.Sprintf("disk slowness detected: %s on file %s (%d bytes) has been ongoing for %0.1fs",
+			i.OpType, fullPath, i.WriteSize, i.Duration.Seconds())
+	default:
+		return fmt.Sprintf("disk slowness detected: %s on file %s has been ongoing for %0.1fs",
+			i.OpType, fullPath, i.Duration.Seconds())
+	}
+}
+
+// SafeFormat preserves the formatting entry point used by callers without
+// requiring a particular redaction package.
+func (i DiskSlowInfo) SafeFormat(w interface{ Printf(string, ...any) }, _ rune) {
+	fullPath, err := filepath.Abs(i.Path)
+	if err != nil {
+		w.Printf("failed to get absolute path %s: %s", i.Path, err)
 		fullPath = i.Path
 	}
 	switch i.OpType {
 	// Operations for which i.WriteSize is meaningful.
 	case OpTypeWrite, OpTypeSyncTo, OpTypePreallocate:
 		w.Printf("disk slowness detected: %s on file %s (%d bytes) has been ongoing for %0.1fs",
-			redact.Safe(i.OpType.String()), redact.Safe(fullPath),
-			redact.Safe(i.WriteSize), redact.Safe(i.Duration.Seconds()))
+			i.OpType.String(), fullPath, i.WriteSize, i.Duration.Seconds())
 	default:
 		w.Printf("disk slowness detected: %s on file %s has been ongoing for %0.1fs",
-			redact.Safe(i.OpType.String()), redact.Safe(fullPath),
-			redact.Safe(i.Duration.Seconds()))
+			i.OpType.String(), fullPath, i.Duration.Seconds())
 	}
 }
 

@@ -1,12 +1,6 @@
-// Copyright 2023 The LevelDB-Go and Pebble Authors. All rights reserved. Use
-// of this source code is governed by a BSD-style license that can be found in
-// the LICENSE file.
-
-// Package vfstest provides facilities for interacting with or faking
-// filesystems during tests and benchmarks.
 package vfstest
 
-import "github.com/cockroachdb/pebble/vfs"
+import "github.com/glycerine/vfs"
 
 // DiscardFile implements vfs.File but discards all written data and reads
 // without mutating input buffers.
@@ -26,3 +20,5 @@ func (*discardFile) SyncTo(length int64) (fullSync bool, err error) { return fal
 func (*discardFile) SyncData() error                                { return nil }
 func (*discardFile) Prefetch(offset int64, length int64) error      { return nil }
 func (*discardFile) Fd() uintptr                                    { return 0 }
+func (*discardFile) Truncate(size int64) error                      { return nil }
+func (*discardFile) Name() string                                   { return "discard" }
